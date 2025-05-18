@@ -1,0 +1,204 @@
+{% extends 'manager/manager_base.html' %}
+{% load static %}
+{% block head_title %}アーカイブコンテンツのアップロード{% endblock %}
+{% block head %}
+<link href="{% static 'manager/css/tagsinput.css' %}" rel="stylesheet" type="text/css">
+<script src="{% static 'manager/js/tagsinput.js' %}"></script>
+{{ form.media }} 
+{% endblock %}
+{% block manager_content %}
+<h1>アーカイブコンテンツのアップロード</h1>
+
+<!-- アラートメッセージの追加（非表示） -->
+<div id="alertBox" class="alert alert-danger d-none" role="alert"></div>
+<div id="successBox" class="alert alert-success d-none" role="alert"></div>
+
+<!-- 進捗バーの追加 -->
+<div id="progressContainer" class="d-none mt-3">
+    <div class="progress">
+        <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
+    </div>
+    <p id="progressText" class="mt-2">アップロード中...</p>
+</div>
+
+<form id="uploadForm" class="p-4 border rounded shadow-sm bg-light">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="title">タイトル</label>
+        <input type="text" name="title" id="title" class="form-control">
+    </div>
+    <div class="form-group">
+        <label for="type_select">ファイルの種類</label>
+        <select name="type_select" id="type_select" class="form-control">
+            <option value="1">ファイル</option>
+            <option value="2">YouTube</option>
+        </select>
+    </div>
+    <div class="mb-3" id="fileGroup">
+        <label for="file" class="form-label">ファイル</label>
+        <input class="form-control" type="file" name="upload_file" id="file">
+    </div>
+    <div class="form-group" id="urlGroup" style="display: none;">
+        <label for="URL">YouTubeのURL</label>
+        <input type="text" name="URL" id="URL" class="form-control">
+    </div>
+    <div class="form-group">
+        <label for="published">公開状態</label>
+        <select name="published" id="published" class="form-control">
+            <option value="1">公開</option>
+            <option value="0">非公開</option>
+        </select>
+    </div>
+    <div class="form-group">
+        <label for="comment">説明</label>
+        <textarea name="comment" id="comment" cols="30" rows="10" class="form-control"></textarea>
+    </div>
+    <div class="form-group">
+        <label for="categories">カテゴリー</label>
+        <div id="categories">
+            {% for category in categories %}
+            <div>
+                <input type="checkbox" id="category_{{ category.0 }}" name="categories" value="{{ category.0 }}">
+                <label for="category_{{ category.0 }}">{{ category.1 }}</label>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+    <div class="form-group">
+        <label for="tags">タグ</label>
+        <input type="text" class="form-control" name="tags" id="tags" data-role="tagsinput" style="display: none;" list="tags_list">
+        <datalist id="tags_list">
+            {% for tag in tags %}
+            <option value="{{ tag.name }}">
+            {% endfor %}
+        </datalist>
+    <button type="submit" class="btn btn-primary">アップロード</button>
+</form>
+
+<script>
+// ページを閉じようとする際に確認ダイアログを表示
+let isSubmitting = false;
+
+window.addEventListener('beforeunload', function (e) {
+    if (isSubmitting) {
+        return;
+    }
+    const confirmationMessage = 'このページを離れると、変更内容が保存されない可能性があります。';
+    e.returnValue = confirmationMessage; // Gecko, Trident, Chrome 34+
+    return confirmationMessage; // Gecko, WebKit, Chrome <34
+});
+document.addEventListener('DOMContentLoaded', function() {
+    const typeSelect = document.getElementById('type_select');
+    const fileGroup = document.getElementById('fileGroup');
+    const urlGroup = document.getElementById('urlGroup');
+    const fileInput = document.getElementById('file');
+    const uploadForm = document.getElementById('uploadForm');
+
+    const alertBox = document.getElementById('alertBox');
+    const successBox = document.getElementById('successBox');
+    const progressContainer = document.getElementById('progressContainer');
+    const progressBar = document.getElementById('progressBar');
+    const progressText = document.getElementById('progressText');
+
+    // ファイルの種類の選択による表示切り替え
+    typeSelect.addEventListener('change', function() {
+        if (typeSelect.value === '1') {
+            fileGroup.style.display = 'block';
+            urlGroup.style.display = 'none';
+        } else {
+            fileGroup.style.display = 'none';
+            urlGroup.style.display = 'block';
+        }
+    });
+
+    // フォームの送信処理
+    uploadForm.addEventListener('submit', function(event) {
+        event.preventDefault();
+        // #progressContainerまでスクロール
+        progressContainer.scrollIntoView({ behavior: 'smooth' });
+        // 送信中フラグを立てる
+        isSubmitting = true;
+        const formData = new FormData(uploadForm);
+        const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+        formData.append('csrfmiddlewaretoken', csrfToken);
+
+        // カテゴリーのチェックボックスの値を追加
+        const categoryCheckboxes = document.querySelectorAll('input[name="categories"]:checked');
+        categoryCheckboxes.forEach(function(checkbox) {
+            formData.append('categories', checkbox.value);
+        });
+
+        if (typeSelect.value === '1' && !fileInput.files.length) {
+            alertBox.textContent = 'アップロードするファイルを選択してください。';
+            alertBox.classList.remove('d-none');
+            return;
+        }
+        alertBox.classList.add('d-none');
+        successBox.classList.add('d-none');
+
+        const xhr = new XMLHttpRequest();
+        xhr.open('POST', "{% url 'upload_ajax' %}", true);
+        xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+        xhr.upload.addEventListener('progress', function(e) {
+            if (e.lengthComputable) {
+                const percentComplete = Math.round((e.loaded / e.total) * 100);
+                progressBar.style.width = percentComplete + '%';
+                progressBar.textContent = percentComplete + '%';
+
+                const uploadedMB = (e.loaded / (1024 * 1024)).toFixed(2);
+                const totalMB = (e.total / (1024 * 1024)).toFixed(2);
+                progressText.textContent = `アップロード中: ${uploadedMB}MB / ${totalMB}MB`;
+            }
+        });
+
+        xhr.onloadstart = function() {
+            progressContainer.classList.remove('d-none');
+            progressBar.style.width = '0%';
+            progressBar.textContent = '0%';
+            progressText.textContent = 'アップロードを開始しました...';
+        };
+
+        xhr.onload = function() {
+            if (xhr.status === 200) {
+                const data = JSON.parse(xhr.responseText);
+                if (data.success) {
+                    successBox.textContent = 'ファイルのアップロードに成功しました。';
+                    successBox.classList.remove('d-none');
+                    progressContainer.classList.add('d-none');
+                    uploadForm.reset();
+                    // ファイル選択ラベルのリセット
+                    const fileLabel = document.querySelector('.custom-file-label');
+                    if (fileLabel) fileLabel.textContent = 'ファイルを選択...';
+                } else {
+                    alertBox.textContent = data.error || 'アップロードに失敗しました。';
+                    alertBox.classList.remove('d-none');
+                    progressContainer.classList.add('d-none');
+                }
+            } else {
+                alertBox.textContent = 'アップロード中にエラーが発生しました。';
+                alertBox.classList.remove('d-none');
+                progressContainer.classList.add('d-none');
+            }
+            isSubmitting = false;
+        };
+
+        xhr.onerror = function() {
+            alertBox.textContent = 'アップロード中にエラーが発生しました。';
+            alertBox.classList.remove('d-none');
+            progressContainer.classList.add('d-none');
+        };
+
+        xhr.send(formData);
+    });
+
+    // ファイル選択時にラベルを更新
+    fileInput.addEventListener('change', function(event) {
+        const fileLabel = document.querySelector('.custom-file-label');
+        if (fileLabel && fileInput.files.length > 0) {
+            fileLabel.textContent = fileInput.files[0].name;
+        }
+    });
+});
+</script>
+{% endblock %}

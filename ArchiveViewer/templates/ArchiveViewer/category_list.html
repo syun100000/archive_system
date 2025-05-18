@@ -1,0 +1,41 @@
+{% extends 'ArchiveViewer/base.html' %}
+
+{% block head_title %}カテゴリー一覧{% endblock %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="text-center mb-4">
+        <h1 class="mb-3 text-center">カテゴリー一覧</h1>
+        <p class="lead">このページでは，カテゴリーから記事やアーカイブコンテンツを検索することができます。</p>
+    </div>
+    {% if categories %}
+        <div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+            {% for category in categories %}
+                <div class="col">
+                    <div class="card h-100">
+                        <div class="card-body d-flex flex-column">
+                            <h5 class="card-title"><a href="{% url 'category_detail' category.id %}">{{ category.name }}</a></h5>
+                            <p class="card-text">{{ category.description }}</p>
+                            {% if category.childrens %}
+                            <p>
+                                <!-- {% for child in category.children.all|slice:":5" %}
+                                    <a href="{% url 'category_detail' child.id %}">{{ child.name }}</a>{% if not forloop.last %}、{% endif %}
+                                {% endfor %}
+                                {% if category.children.all|length > 5 %}
+                                    、<a href="{% url 'category_list' %}?parent={{ category.id }}" class="btn btn-link p-0">もっと見る ({{ category.children.all|length|add:'-5' }}件)</a>
+                                {% endif %} -->
+                                {% for child in category.childrens %}
+                                    <a href="{% url 'category_detail' child.id %}">{{ child.name }}</a>{% if not forloop.last %}、{% endif %}
+                                {% endfor %}
+                            </p>
+                            {% endif %}
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% else %}
+        <p class="text-center">カテゴリーが見つかりませんでした。カテゴリーが登録されていないか，有効なカテゴリーが存在しない可能性があります。</p>
+    {% endif %}
+</div>
+{% endblock %}

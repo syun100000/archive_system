@@ -1,0 +1,189 @@
+{% extends 'ArchiveViewer/base.html' %}
+
+{% block head_title %}{{ category.name }}{% endblock %}
+
+{% block content %}
+<!-- パンくずリストの表示 -->
+{% if breadcrumbs %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'category' %}">カテゴリー一覧</a></li>
+            {% for parent in breadcrumbs %}
+                <li class="breadcrumb-item"><a href="{% url 'category_detail' parent.id %}">{{ parent.name }}</a></li>
+            {% endfor %}
+            <li class="breadcrumb-item active" aria-current="page">{{ category.name }}</li>
+        </ol>
+    </nav>
+{% else %}
+    <nav aria-label="breadcrumb">
+        <ol class="breadcrumb">
+            <li class="breadcrumb-item"><a href="{% url 'category_list' %}">カテゴリー一覧</a></li>
+            <li class="breadcrumb-item active" aria-current="page">{{ category.name }}</li>
+        </ol>
+    </nav>
+{% endif %}
+<h1>{{ category.name }}</h1>
+<p>{{ category.description }}</p>
+{% if childrens %}
+<div class="row row-cols-1 row-cols-md-2 row-cols-lg-3 g-4">
+    {% for category in childrens %}
+        <div class="col">
+            <div class="card h-100">
+                <div class="card-body d-flex flex-column">
+                    <h5 class="card-title"><a href="{% url 'category_detail' category.id %}">{{ category.name }}</a></h5>
+                    <p class="card-text">{{ category.description }}</p>
+                    {% if category.children.all %}
+                    <p>
+                        {% for child in category.children.all|slice:":5" %}
+                            <a href="{% url 'category_detail' child.id %}">{{ child.name }}</a>{% if not forloop.last %}、{% endif %}
+                        {% endfor %}
+                        {% if category.children.all|length > 5 %}
+                            、<a href="{% url 'category_list' %}?parent={{ category.id }}" class="btn btn-link p-0">もっと見る ({{ category.children.all|length|add:'-5' }}件)</a>
+                        {% endif %}
+                    </p>
+                    {% endif %}
+                </div>
+            </div>
+        </div>
+    {% endfor %}
+</div>
+{% endif %}
+    <!-- アーカイブコンテンツのテーブル表示 -->
+    <h2>アーカイブコンテンツ</h2>
+    {% if uploads %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>タイトル</th>
+                    <th>ファイル名</th>
+                    <th>公開日</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for upload in uploads %}
+                    <tr>
+                        <td><a href="{% url 'upload_contents_detail' upload.file_id %}">{{ upload.title }}</a></td>
+                        <td>{{ upload.file_name }}</td>
+                        <td>{{ upload.insert_at|date:"Y-m-d" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- 新しいページネーションデザインの適用 -->
+        <div class="pagination-container">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if uploads.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?uploads_page=1&reports_page={{ reports.number }}&keyword={{ request.GET.keyword }}&searchOption={{ request.GET.searchOption }}" aria-disabled="true">&laquo; 最初</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?uploads_page={{ uploads.previous_page_number }}&reports_page={{ reports.number }}&keyword={{ request.GET.keyword }}&searchOption={{ request.GET.searchOption }}">前</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">&laquo; 最初</a>
+                        </li>
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">前</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">
+                            ページ {{ uploads.number }} of {{ uploads.paginator.num_pages }}
+                        </a>
+                    </li>
+
+                    {% if uploads.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?uploads_page={{ uploads.next_page_number }}&reports_page={{ reports.number }}&keyword={{ request.GET.keyword }}&searchOption={{ request.GET.searchOption }}">次</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?uploads_page={{ uploads.paginator.num_pages }}&reports_page={{ reports.number }}&keyword={{ request.GET.keyword }}&searchOption={{ request.GET.searchOption }}">最後 &raquo;</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">次</a>
+                        </li>
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">最後 &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    {% else %}
+        <p>このカテゴリーにはアーカイブコンテンツがありません。</p>
+    {% endif %}
+    
+    <!-- 記事のテーブル表示 -->
+    <h2>記事</h2>
+    {% if reports %}
+        <table class="table table-striped">
+            <thead>
+                <tr>
+                    <th>タイトル</th>
+                    <th>作成日</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                    <tr>
+                        <td><a href="{% url 'report_contents_detail' report.id %}">{{ report.title }}</a></td>
+                        <td>{{ report.created_at|date:"Y-m-d" }}</td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        
+        <!-- 新しいページネーションデザインの適用 -->
+        <div class="pagination-container">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if reports.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?uploads_page={{ uploads.number }}&reports_page=1&keyword={{ request.GET.keyword }}&searchOption={{ request.GET.searchOption }}" aria-disabled="true">&laquo; 最初</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?uploads_page={{ uploads.number }}&reports_page={{ reports.previous_page_number }}&keyword={{ request.GET.keyword }}&searchOption={{ request.GET.searchOption }}">前</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">&laquo; 最初</a>
+                        </li>
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">前</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">
+                            ページ {{ reports.number }} of {{ reports.paginator.num_pages }}
+                        </a>
+                    </li>
+
+                    {% if reports.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?uploads_page={{ uploads.number }}&reports_page={{ reports.next_page_number }}&keyword={{ request.GET.keyword }}&searchOption={{ request.GET.searchOption }}">次</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?uploads_page={{ uploads.number }}&reports_page={{ reports.paginator.num_pages }}&keyword={{ request.GET.keyword }}&searchOption={{ request.GET.searchOption }}">最後 &raquo;</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">次</a>
+                        </li>
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">最後 &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+    {% else %}
+        <p>このカテゴリーには記事がありません。</p>
+    {% endif %}
+</div>
+{% endblock %}

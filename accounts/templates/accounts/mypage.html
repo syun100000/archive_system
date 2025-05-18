@@ -1,0 +1,192 @@
+{% extends 'ArchiveViewer/base.html' %}
+<!-- staticの読み込み -->
+{% load static %}
+{% block head_title %}マイページ{% endblock %}
+{% block content %}
+<script src="{% static 'js/mypage.js' %}"></script>
+<script src="{% static 'js/modal.js' %}"></script>
+{% if user.first_name and user.last_name %}
+<h2>{{user.last_name}}{{ user.first_name }}さんのマイページ</h1>
+{% else %}
+<h2>名称未設定さんのマイページ</h1>
+{% endif %}
+    {% if user.is_superuser or user.is_staff %}
+    <div class="alert alert-info" role="alert">
+        <p>{{user.last_name}}さんは、下記のページへのアクセス権限があります。</p>
+        <div class="row">
+            <div class="col-auto">
+                <a href="{% url 'manager_index' %}" class="btn btn-primary">管理ページへ</a>
+            </div>
+            {% if user.is_superuser %}
+            <div class="col-auto">
+                <a href="{% url 'admin:index' %}" class="btn btn-secondary" target="_blank">Django 管理ページへ</a>
+            </div>
+            {% endif %}
+        </div>
+    </div>
+    {% endif %}
+    <!-- 名前がない時登録を促す -->
+    {% if not user.first_name %}
+    <div class="alert alert-warning" role="alert">
+        <p style="color: red;">名前が登録されていません。アカウントのタブから名前を登録してください。</p>
+    </div>
+    {% endif %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    <!-- マイページ内容ナビゲーションバー -->
+    <ul class="nav nav-tabs" id="mypage_nav">
+        <li class="nav-item">
+            <a class="nav-link active" id="home_contents_button" href="#" onclick="home_contents()">ホーム</a>
+        </li>
+        <li class="nav-item">
+            <a class="nav-link" onclick="edit_contents()" id="edit_contents_button" href="#">アカウント</a>
+        </li>
+    </ul>
+    </ul>
+    <div id="home_contents">
+        <div id="report_favorites">
+            <h3>お気に入りの記事</h3>
+            <p>登録中のお気に入り記事の数:{{ report_favorites|length }}</p>
+            <table class="table">
+                <tr>
+                    <th>お気に入り登録日時</th>
+                    <th>タイトル</th>
+                    <th>記事の更新日時</th>
+                    <th>お気に入りから削除</th>
+                </tr>
+                {% for report_favorite in report_favorites %}
+                <tr>
+                    <td>{{ report_favorite.created_at }}</td>
+                    <td><a href="{% url 'report_contents_detail' report_favorite.report.id %}">{{ report_favorite.report.title }}</a></td>
+                    <td>{{ report_favorite.report.updated_at }}</td>
+                    <td>
+                        <form action="{% url 'report_favorite_delete'%}" method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="report_id" value="{{ report_favorite.report.id }}">
+                            <button type="submit" class="btn btn-primary">削除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div id="upload_favorites">
+            <h3>お気に入りのアーカイブコンテンツ</h3>
+            <p>登録中のお気に入りアーカイブコンテンツの数:{{ upload_favorites|length }}</p>
+            <table class="table">
+                <tr>
+                    <th>お気に入り登録日時</th>
+                    <th>タイトル</th>
+                    <th>コンテンツの更新日時</th>
+                    <th>お気に入りから削除</th>
+                </tr>
+                {% for upload_favorite in upload_favorites %}
+                <tr>
+                    <td>{{ upload_favorite.created_at }}</td>
+                    <td><a href="{% url 'upload_contents_detail' upload_favorite.upload.file_id %}">{{ upload_favorite.upload.title }}</a></td>
+                    <td>{{ upload_favorite.upload.update_at }}</td>
+                    <td>
+                        <form action="{% url 'upload_favorite_delete'%}" method="POST">
+                            {% csrf_token %}
+                            <input type="hidden" name="upload_id" value="{{ upload_favorite.upload.file_id }}">
+                            <button type="submit" class="btn btn-primary">削除</button>
+                        </form>
+                    </td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div id="upload_history">
+            <h3>アーカイブコンテンツの閲覧履歴</h3>
+            <p>直近10件の閲覧履歴</p>
+            <table class="table" id="upload_history_table">
+                <tr>
+                    <th>閲覧日時</th>
+                    <th>タイトル</th>
+                    <th>コンテンツの更新日時</th>
+                </tr>
+                {% for upload_history in upload_histories %}
+                <tr>
+                    <td>{{ upload_history.created_at }}</td>
+                    <td><a href="{% url 'upload_contents_detail' upload_history.upload.file_id %}">{{ upload_history.upload.title }}</a></td>
+                    <td>{{ upload_history.upload.update_at }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+        <div id="report_history">
+            <h3>記事の閲覧履歴</h3>
+            <p>直近10件の閲覧履歴</p>
+            <table class="table" id="report_history_table">
+                <tr>
+                    <th>閲覧日時</th>
+                    <th>タイトル</th>
+                    <th>記事の更新日時</th>
+                </tr>
+                {% for report_history in report_histories %}
+                <tr>
+                    <td>{{ report_history.created_at }}</td>
+                    <td><a href="{% url 'report_contents_detail' report_history.report.id %}">{{ report_history.report.title }}</a></td>
+                    <td>{{ report_history.report.updated_at }}</td>
+                </tr>
+                {% endfor %}
+            </table>
+        </div>
+    </div>
+    <div id="edit_contents">
+        <h3>アカウント設定</h3>
+        <p>アカウント設定を変更することができます。</p>
+        <table class="table">
+            <tr>
+                <th>名前</th>
+                <td>{{ user.last_name }} {{ user.first_name }}</td>
+                <td><button type="button" class="btn btn-primary" onclick="edit_name()">変更</button></td>
+            </tr>
+            <tr>
+                <th>メールアドレス</th>
+                <td>{{ user.email }}</td>
+                <td><a href="{% url 'email_change' %}" class="btn btn-primary">変更</a></td>
+            </tr>
+            <tr>
+                <th>パスワード</th>
+                <td>********</td>
+                <!-- <td><button type="button" class="btn btn-primary" onclick="edit_password()">変更</button></td> -->
+                <!-- <td><a href="{% url 'account_change_password' %}" class="btn btn-primary">変更</a></td> -->
+                <td><a href="{% url 'password_change' %}" class="btn btn-primary">変更</a></td>
+            </tr>
+        </table>
+        <!-- 退会ボタン -->
+        <button class="btn btn-danger" onclick="delete_account()">アカウントの削除</button>
+        <!-- モーダル -->
+        <div class="modal" tabindex="-1" id="modal" style="display: none;">
+            <div class="modal-dialog">
+              <div class="modal-content">
+                <div class="modal-header">
+                  <h5 class="modal-title"></h5>
+                  <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div class="modal-description"></div>
+                    <div class="modal_contents">
+                        <form action="" method="POST" id="modal_form">
+                            {% csrf_token %}
+                    </div>
+                </div>
+                <div class="modal-footer">
+                  <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                  <button type="submit" class="btn btn-primary">変更</button>
+                </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+
+    </div>
+{% endblock content %}

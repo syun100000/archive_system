@@ -1,0 +1,28 @@
+about_page: # このサイトについてのページの設定
+  content: ${about_page_content}
+  title: このサイトについて # タイトル
+location_address: ${location_address}  # 住所
+location_name: ${location_name}
+location_tel: ${location_tel}
+location_web: ${location_web}
+site_title: ${site_title}  # サイトのタイトル
+staff_authority:  # スタッフの権限
+  can_edit_announcement: true # お知らせの編集権限
+  can_edit_category: false  # カテゴリーの編集権限
+  can_edit_report: true # レポートの編集権限
+  can_edit_tag: false # タグの編集権限
+  can_edit_upload: true # アップロードの編集権限
+top_page: # トップページの設定
+  show_recent: false  # 最近の記事の表示
+  show_recommend: false   # おすすめの記事の表示
+AI: # AI機能の設定
+  enabled: true # AI機能の有効化
+  model: ollama # AIモデルの指定　gpt or ollama
+  gpt:  # openaiのGPTモデルの設定
+    model_name: "gpt-4o-mini" # GPTモデルの指定
+    url: "https://api.openai.com/v1/chat/completions" # APIのURL
+    api_key: "API_KEY" # APIキー
+    max_tokens: 300 # 最大トークン数
+  ollama: # OLLAMAモデルの設定
+    model_name: "lucas" # OLLAMAモデルの指定
+    url: "http://localhost:5000/ollama" # APIのURL

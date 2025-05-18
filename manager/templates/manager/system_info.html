@@ -1,0 +1,72 @@
+{% extends 'manager/manager_base.html' %}
+{% load static %}
+{% block head_title %} 記事一覧 {% endblock %}
+{% block manager_content %}
+<h1>システム情報</h1>
+<h2>システム更新履歴</h2>
+<table class="table">
+    <tr>
+        <th>システムバージョン</th>
+        <th>更新日</th>
+        <th>更新内容</th>
+    </tr>
+    {% for history in histories %}
+    <tr>
+        <td>{{ history.software_version }}</td>
+        <td>{{ history.created_at }}</td>
+        <td>{{ history.content }}</td>
+    </tr>
+    {% endfor %}
+</table>
+<h2>システム情報</h2>
+<table class="table">
+    <tr>
+        <th>管理システムのバージョン</th>
+        <td>{{ software_version }}</td>
+    </tr>
+    <tr>
+        <th>サーバーのOS名</th>
+        <td>{{ server_os }}</td>
+    </tr>
+    <tr>
+        <th>サーバーのホスト名</th>
+        <td>{{ server_hostname }}</td>
+    </tr>
+    <tr>
+        <th>サーバーのOSバージョン</th>
+        <td>{{ server_version }}</td>
+    </tr>
+    <tr>
+        <th>サーバーのOSのビット数</th>
+        <td>{{ server_bit }}</td>
+    </tr>
+    <tr>
+        <th>サーバーのCPU情報</th>
+        <td>{{ server_cpu }}</td>
+    </tr>
+    <tr>
+        <th>サーバーのメモリ情報</th>
+        <td>{{ server_memory }}</td>
+    </tr>
+    <tr>
+        <th>サーバーのディスク情報</th>
+        <td>{{ server_disk }}</td>
+    </tr>
+    <tr>
+        <th>サーバーのIPアドレス</th>
+        <td>{{ server_ip }}</td>
+    </tr>
+    <tr>
+        <th>Pythonのバージョン</th>
+        <td>{{ python_version }}</td>
+    </tr>
+    <tr>
+        <th>MySQLのバージョン</th>
+        <td>{{ mysql_version }}</td>
+    </tr>
+    <tr>
+        <th>Djangoのバージョン</th>
+        <td>{{ django_version }}</td>
+    </tr>
+</table>
+{% endblock %}

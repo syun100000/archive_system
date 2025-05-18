@@ -1,0 +1,330 @@
+{% extends 'manager/manager_base.html' %}
+{% load static %}
+{% block head %}
+<link href="{% static 'manager/css/tagsinput.css' %}" rel="stylesheet" type="text/css">
+<script src="{% static 'manager/js/tagsinput.js' %}"></script>
+{{ form.media }} 
+{% endblock %}
+{% block head_title %}{{ upload.title }}の編集{% endblock %}
+{% block manager_content %}
+    <h1>アーカイブコンテンツの編集</h1>
+    <a href="{% url 'upload_contents_detail' upload.file_id %}" class="btn btn-primary">このアーカイブコンテンツを表示</a>
+    {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+    {% endif %}
+    <form id="edit-form" action="{% url 'upload_edit' upload.file_id %}" method="POST" enctype="multipart/form-data">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="title">タイトル</label>
+            {{ form.title }}
+        </div>
+        {% if AI_enabled and content_type == 'image' %}
+        <button type="button" class="btn btn-secondary" onclick="generateTitle()">タイトルを生成</button>
+        {% endif %}
+        <div class="form-group">
+            <label for="preview">プレビュー</label>
+            {% if content_type == 'image' %}
+            <div class="text-center">
+                <img src="{{ upload.file_path }}" alt="{{ upload.file_name }}" class="img-thumbnail" style="max-width: 30%; max-height: 100%;">
+            </div>
+            {% elif content_type == 'pdf' %}
+            <div class="text-center" id="thumbnail-container"></div>
+            <script>
+                var pdfFilePath = "{{ upload.file_path }}";
+                var canvas;
+
+                pdfjsLib.getDocument(pdfFilePath).promise.then(function(pdf) {
+                    return pdf.getPage(1);
+                }).then(function(page) {
+                    var scale = 0.5;
+                    var viewport = page.getViewport({ scale: scale });
+                
+                    canvas = document.createElement('canvas');
+                    var context = canvas.getContext('2d');
+                    canvas.height = viewport.height;
+                    canvas.width = viewport.width;
+                
+                    var renderContext = {
+                        canvasContext: context,
+                        viewport: viewport
+                    };
+                    return page.render(renderContext).promise;
+                }).then(function() {
+                    if (canvas) {
+                        var thumbnail = canvas.toDataURL('image/png');
+                        var imgElement = document.createElement('img');
+                        imgElement.src = thumbnail;
+                        document.getElementById('thumbnail-container').appendChild(imgElement);
+                    } else {
+                        console.error('Canvas is not initialized.');
+                    }
+                });
+            </script>
+            <script>
+                // upload_ocrにアクセスしてOCR結果を取得
+                function upload_ocr() {
+                    const xhr = new XMLHttpRequest();
+                    const url = "{% url 'upload_ocr' %}";
+                    const file_id = "{{ upload.file_id }}";
+                    xhr.open('POST', url, true);
+                    xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+                    xhr.setRequestHeader('X-CSRFToken', "{{ csrf_token }}");
+                    xhr.onreadystatechange = function () {
+                        if (xhr.readyState === 4) {
+                            if (xhr.status === 200) {
+                                const response = JSON.parse(xhr.responseText);
+                                alert(response.message);
+                            }
+                        }
+                    };
+                    xhr.send('file_id=' + file_id);
+                }
+
+            </script>
+            <button type="button" class="btn btn-secondary" onclick="upload_ocr()">OCRを実行</button>
+            {% elif content_type == 'audio' %}
+            <div class="text-center mt-4">
+                <audio controls>
+                    <source src="{{ upload.file_path }}" type="audio/mp3">
+                </audio>
+            </div>
+            {% elif content_type == 'youtube' %}
+            <div class="text-center mt-4">
+                <iframe width="auto" height="auto" src="{{ upload.file_path }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+            </div>
+            {% elif content_type == 'video' %}
+            <div class="text-center mt-4">
+                <video controls>
+                    <source src="{{ upload.file_path }}" type="video/mp4">
+                </video>
+            </div>
+            {% else %}
+            <div class="text-center mt-4">
+                <a href="{{ upload.file_path }}" class="btn btn-primary" download>ファイルをダウンロード</a>
+            </div>
+            {% endif %}
+        </div>
+        <div class="alert alert-info" role="alert" id="alertBox">
+            <p>ファイルの変更はできません。ファイルを変更する場合は新規にアップロードしてください。</p>
+        </div>
+        <div class="form-group">
+            <label for="comment">説明</label>
+            {{ form.comment }}
+        </div>
+        {% if AI_enabled and content_type == 'image' %}
+        <button type="button" class="btn btn-secondary" onclick="generateDescription()">説明を生成</button>
+        {% endif %}
+        <div class="form-group">
+            <label for="categories">カテゴリー:</label>
+            {{ form.categories }}
+        </div>
+        <hr>
+        <div class="form-group">
+            <label for="tags">タグ:</label>
+            {{ form.tags }}
+            <datalist id="tags_list">
+                {% for tag in tags %}
+                <option value="{{ tag.name }}">
+                {% endfor %}
+            </datalist>
+        </div>
+        {% if AI_enabled and content_type == 'image' %}
+        <button type="button" class="btn btn-secondary" onclick="generateTags()">タグを生成</button>
+        {% endif %}
+        <hr>
+        <div class="form-group">
+            <label for="published">公開状態</label>
+            {{ form.published }}
+        </div>
+        <input type="submit" value="更新" class="btn btn-primary" onclick="window.onbeforeunload=null">
+    </form>
+    <div data-upload_ai-url="{% url 'upload_ai' %}" data-upload_id="{{ upload.file_id }}"></div>
+    <script>
+    // ページを閉じようとする際に確認ダイアログを表示
+    let isSubmitting = false;
+
+    window.addEventListener('beforeunload', function (e) {
+        if (isSubmitting) {
+            return;
+        }
+        const confirmationMessage = 'このページを離れると、変更内容が保存されない可能性があります。';
+        e.returnValue = confirmationMessage; // Gecko, Trident, Chrome 34+
+        return confirmationMessage; // Gecko, WebKit, Chrome <34
+    });
+
+    // フォーム送信時に確認ダイアログを表示しない
+    document.getElementById('edit-form').addEventListener('submit', function() {
+        isSubmitting = true;
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        const typeSelect = document.getElementById('id_type_select');
+        const fileGroup = document.getElementById('fileGroup');
+        const urlGroup = document.getElementById('URL');
+
+        // ファイルの種類の選択による表示切り替え
+        typeSelect.addEventListener('change', function() {
+            if (typeSelect.value === '1') {
+                fileGroup.style.display = 'block';
+                urlGroup.style.display = 'none';
+            } else {
+                fileGroup.style.display = 'none';
+                urlGroup.style.display = 'block';
+            }
+        });
+
+        // ファイル選択時にラベルを更新
+        const fileInput = document.getElementById('id_file_path');
+        fileInput.addEventListener('change', function(event) {
+            const fileLabel = document.querySelector('.custom-file-label');
+            if (fileLabel && fileInput.files.length > 0) {
+                fileLabel.textContent = fileInput.files[0].name;
+            }
+        });
+    });
+
+    // AIによる説明生成
+    function generateDescription() {
+        const title = document.getElementById('title').value;
+        const comment = document.getElementById('comment').value;
+        let send_request_message = '';  // 送信するリクエストメッセージ
+        // commentが空でない場合は確認ダイアログを表示
+        if (comment) {
+            if (!confirm('説明を生成すると、現在の説明が上書きされます。よろしいですか？')) {
+                return;
+            }
+        }
+        if (title && comment) {
+            send_request_message = 'title=' + title + '&comment=' + comment;
+        }else if (title) {
+            send_request_message = 'title=' + title;
+        }else if (comment) {
+            send_request_message = 'comment=' + comment;
+        }else{
+            send_request_message = '';
+        }
+        const xhr = new XMLHttpRequest();
+        url = document.querySelector('[data-upload_ai-url]').dataset.upload_aiUrl;
+        const file_id = document.querySelector('[data-upload_id]').dataset.upload_id;
+        const action = 'describe';
+        showLoading();
+        xhr.open('POST', url, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+        xhr.timeout = 300000; // タイムアウトを300秒に設定
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+            hideLoading();
+            if (xhr.status === 200) {
+                const response = JSON.parse(xhr.responseText);
+                document.getElementById('comment').value = response.message;
+            }
+            }
+        };
+        xhr.ontimeout = function () {
+            hideLoading();
+            alert('リクエストがタイムアウトしました。');
+        };
+        xhr.send('file_id=' + file_id + '&action=' + action + '&' + send_request_message);
+    }
+
+    // レスポンスがきていない間はLoading...をbootstrapを使って画面の中央に表示
+    function showLoading() {
+        const loading = document.createElement('div');
+        loading.classList.add('position-fixed', 'top-50', 'start-50', 'translate-middle', 'text-center');
+        loading.innerHTML = `
+            <div class="spinner-border text-primary" role="status">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <div>処理中...</div>
+        `;
+        document.body.appendChild(loading);
+    }
+    // レスポンスがきたらLoading...を非表示
+    function hideLoading() {
+        const loading = document.querySelector('.position-fixed');
+        if (loading) {
+            loading.remove();
+        }
+    }
+    // AIによるタグ生成
+    function generateTags() {
+        const title = document.getElementById('title').value;
+        const comment = document.getElementById('comment').value;
+        let send_request_message = '';  // 送信するリクエストメッセージ
+        if (title && comment) {
+            send_request_message = 'title=' + title + '&comment=' + comment;
+        }else if (title) {
+            send_request_message = 'title=' + title;
+        }else if (comment) {
+            send_request_message = 'comment=' + comment;
+        }else{
+            send_request_message = '';
+        }
+        const xhr = new XMLHttpRequest();
+        url = document.querySelector('[data-upload_ai-url]').dataset.upload_aiUrl;
+        const file_id = document.querySelector('[data-upload_id]').dataset.upload_id;
+        const action = 'tag';
+        showLoading();
+        xhr.open('POST', url, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+        xhr.timeout = 300000; // タイムアウトを300秒に設定
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                hideLoading();
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    response.tags.forEach(function(tag){
+                        $('#id_tags').tagsinput('add', tag);
+                    });
+                }
+            }
+        };
+        xhr.ontimeout = function () {
+            hideLoading();
+            alert('リクエストがタイムアウトしました。');
+        };
+        xhr.onerror = function () {
+            hideLoading();
+            let error;
+            try {
+                error = JSON.parse(xhr.responseText);
+            } catch (e) {
+                error = { message: '不明なエラーが発生しました。' };
+            }
+            alert('リクエストが失敗しました。' + error.message);
+        };
+        xhr.send('file_id=' + file_id + '&action=' + action + '&' + send_request_message);
+    }
+    function generateTitle() {
+        const xhr = new XMLHttpRequest();
+        url = document.querySelector('[data-upload_ai-url]').dataset.upload_aiUrl;
+        const file_id = document.querySelector('[data-upload_id]').dataset.upload_id;
+        const action = 'title';
+        showLoading();
+        xhr.open('POST', url, true);
+        xhr.setRequestHeader('Content-Type', 'application/x-www-form-urlencoded');
+        xhr.setRequestHeader('X-CSRFToken', '{{ csrf_token }}');
+        xhr.timeout = 300000; // タイムアウトを300秒に設定
+        xhr.onreadystatechange = function () {
+            if (xhr.readyState === 4) {
+                hideLoading();
+                if (xhr.status === 200) {
+                    const response = JSON.parse(xhr.responseText);
+                    document.getElementById('title').value = response.message;
+                }
+            }
+        };
+        xhr.ontimeout = function () {
+            hideLoading();
+            alert('リクエストがタイムアウトしました。');
+        };
+        xhr.send('file_id=' + file_id + '&action=' + action);
+    }
+    </script>
+{% endblock %}

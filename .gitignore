@@ -1,0 +1,17 @@
+# パッケージ管理しないファイル
+web.config
+.htaccess
+.venv
+.env
+.vscode
+*.log
+*.pyc
+__pycache__/
+db-volumes/
+db.sqlite3
+/media/
+/static/
+wsgi.py
+staticfiles/
+/temp/
+.sql

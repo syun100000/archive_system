@@ -1,0 +1,98 @@
+{% extends 'ArchiveViewer/base.html' %}
+
+
+{% block content %}
+<h2>アーカイブの検索結果</h2>
+{% if messages %}
+{% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+{% endfor %}
+{% endif %}
+<div class="search-results">
+    {% if search_results_upload %}
+    <p>検索ヒット数: {{ search_results_upload.paginator.count }}</p>
+        <table class="table-custom">
+            <thead>
+                <tr>
+                    <th style="width: 20ch;">アーカイブ登録日時</th>
+                    <th>タイトル</th>
+                    <th>説明</th>
+                    <th style="width: 20ch;">詳細ページ</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for item in search_results_upload %}
+                    <tr>
+                        <td>{{ item.insert_at }}</td>
+                        <td>{{ item.title }}</td>
+                        <td>{{ item.comment|truncatechars:50 }}</td>
+                        <td><a href="{% url 'upload_contents_detail' item.file_id %}" class="btn btn-primary" >詳細ページを開く</a></td>
+                    </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="pagination-container">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if search_results_upload.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1&keyword={{ request.GET.keyword }}&searchOption={{ request.GET.searchOption }}" tabindex="-1" aria-disabled="true">&laquo; 最初</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ search_results_upload.previous_page_number }}&keyword={{ request.GET.keyword }}&searchOption={{ request.GET.searchOption }}">前</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">&laquo; 最初</a>
+                        </li>
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">前</a>
+                        </li>
+                    {% endif %}
+        
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">
+                            ページ {{ search_results_upload.number }} of {{ search_results_upload.paginator.num_pages }}
+                        </a>
+                    </li>
+        
+                    {% if search_results_upload.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ search_results_upload.next_page_number }}&keyword={{ request.GET.keyword }}&searchOption={{ request.GET.searchOption }}">次</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ search_results_upload.paginator.num_pages }}&keyword={{ request.GET.keyword }}&searchOption={{ request.GET.searchOption }}">最後 &raquo;</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">次</a>
+                        </li>
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">最後 &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+
+    {% else %}
+        <div class="text-center">
+            <p>検索ヒット数: 0</p>
+            {% if is_search_view %}
+                <p>{{ request.GET.keyword }} というキーワードの検索結果はありません。</p>
+            {% else %}
+                <p>検索結果はありません。</p>
+            {% endif %}
+        </div>
+    {% endif %}
+</div>
+
+<div class="text-center">
+    <a href="#" onclick="history.back(-1);return false;" class="btn btn-primary">戻る</a>
+</div>
+
+{% endblock %}

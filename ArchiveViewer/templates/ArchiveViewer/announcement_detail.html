@@ -1,0 +1,26 @@
+{% extends 'ArchiveViewer/base.html' %}
+{% load static %}
+{% block head_title %}{{ announcement.title }}{% endblock %}
+{% block content %}
+{% if  announcement.is_public == False %}
+<div class="alert alert-warning" role="alert">
+    <p>このお知らせは非公開に設定されています！</p>
+</div>
+{% endif %}
+<h1>{{ announcement.title }}</h1>
+<p>{{ announcement.created_at|date:"Y年m月d日 H:i" }} に作成</p>
+<div class="row" style="margin-bottom: 10px;">
+    <div class="col-auto">
+        {% if user.is_authenticated %}
+        {% if can_edit_announcement %}
+        <a href="{% url 'announcement_edit' announcement.id %}" class="btn btn-primary">編集</a>
+        {% endif %}
+        {% endif %}
+    </div>
+</div>
+{% if announcement.is_html %}
+    <div>{{ announcement.description|safe }}</div>
+{% else %}
+    <p>{{ announcement.description|linebreaks }}</p>
+{% endif %}
+{% endblock %}

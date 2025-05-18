@@ -1,0 +1,5 @@
+<p>こんにちは {{ user.username }} さん,</p>
+<p>以下のリンクをクリックして、メールアドレスの変更を確認してください:</p>
+<p><a href="http://{{ domain }}{% url 'confirm_email' uidb64=uidb64 token=token %}?new_email={{ new_email }}">メールアドレスを確認</a></p>
+<p>このリンクは24時間有効です。</p>
+

@@ -1,0 +1,68 @@
+{% extends 'manager/manager_base.html' %}
+{% block head_title %} 管理トップ {% endblock %}
+{% block manager_content %}
+    <h1>管理トップ</h1>
+    {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show d-flex align-items-center" role="alert">
+            <svg class="bi flex-shrink-0 me-2" width="24" height="24" role="img" aria-label="Info:"><use xlink:href="#info-fill"/></svg>
+            <div>
+                {{ message }}
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+    {% endif %}
+    <p>管理ページへようこそ！<br>
+    ここでは、記事の投稿や編集、削除、ユーザーの管理などを行うことができます。</p>
+    <h2 style="text-align: left; color: #2c3e50;">管理ナビゲーション</h2>
+    <ul style="list-style-type: none; padding: 0;">
+        {% if user.is_superuser or can_edit_announcement %}
+        <li style="margin: 10px 0; padding: 10px; background-color: #f8d7da; border-radius: 5px;">
+            <a href="{% url 'announcement_create' %}" style="text-decoration: none; color: #721c24; font-weight: bold;">お知らせの投稿</a> - 新しいお知らせを投稿できます。
+        </li>
+        <li style="margin: 10px 0; padding: 10px; background-color: #f8d7da; border-radius: 5px;">
+            <a href="{% url 'announcements' %}" style="text-decoration: none; color: #721c24; font-weight: bold;">お知らせの編集・削除</a> - 既存のお知らせを編集または削除できます。
+        </li>
+        {% endif %}
+        {% if user.is_superuser or can_edit_report %}
+        <li style="margin: 10px 0; padding: 10px; background-color: #d4edda; border-radius: 5px;">
+            <a href="{% url 'write_report' %}" style="text-decoration: none; color: #155724; font-weight: bold;">記事の投稿</a> - 新しい記事を投稿できます。
+        </li>
+        <li style="margin: 10px 0; padding: 10px; background-color: #d4edda; border-radius: 5px;">
+            <a href="{% url 'reports' %}" style="text-decoration: none; color: #155724; font-weight: bold;">記事の編集・削除</a> - 既存の記事を編集または削除できます。
+        </li>
+        {% endif %}
+        {% if user.is_superuser %}
+        <li style="margin: 10px 0; padding: 10px; background-color: #cce5ff; border-radius: 5px;">
+            <a href="{% url 'users' %}" style="text-decoration: none; color: #004085; font-weight: bold;">ユーザー一覧</a> - 登録されているユーザーの一覧を表示します。
+        </li>
+        {% endif %}
+        {% if user.is_superuser or can_edit_upload %}
+        <li style="margin: 10px 0; padding: 10px; background-color: #fff3cd; border-radius: 5px;">
+            <a href="{% url 'upload_list' %}" style="text-decoration: none; color: #856404; font-weight: bold;">アーカイブコンテンツの管理</a> - アーカイブされたコンテンツを管理できます。
+        </li>
+        {% endif %}
+        {% if user.is_superuser %}
+        <li style="margin: 10px 0; padding: 10px; background-color: #e2e3e5; border-radius: 5px;">
+            <a href="{% url 'admin:index' %}" target="_blank" style="text-decoration: none; color: #383d41; font-weight: bold;">Django管理</a> - Djangoの管理画面にアクセスできます。
+        </li>
+        <li style="margin: 10px 0; padding: 10px; background-color: #e2e3e5; border-radius: 5px;">
+            <a href="{% url 'config_page' %}" style="text-decoration: none; color: #383d41; font-weight: bold;">システム設定</a> - システムの設定を変更できます。
+        </li>
+        {% endif %}
+        {% if user.is_superuser or can_edit_tag %}
+        <li style="margin: 10px 0; padding: 10px; background-color: #f8d7da; border-radius: 5px;">
+            <a href="{% url 'tags' %}" style="text-decoration: none; color: #721c24; font-weight: bold;">タグ管理</a> - タグを管理できます。
+        </li>
+        {% endif %}
+        {% if user.is_superuser or can_edit_category %}
+        <li style="margin: 10px 0; padding: 10px; background-color: #d4edda; border-radius: 5px;">
+            <a href="{% url 'category_list' %}" style="text-decoration: none; color: #155724; font-weight: bold;">カテゴリー一覧</a> - カテゴリーの一覧を表示します。
+        </li>
+        <li style="margin: 10px 0; padding: 10px; background-color: #d4edda; border-radius: 5px;">
+            <a href="{% url 'category_create' %}" style="text-decoration: none; color: #155724; font-weight: bold;">カテゴリー追加</a> - 新しいカテゴリーを追加できます。
+        </li>
+        {% endif %}
+    </ul>
+{% endblock manager_content %}

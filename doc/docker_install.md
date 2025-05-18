@@ -1,0 +1,182 @@
+# Dockerを使用したインストール手順（デプロイ）
+
+## 目次
+- [Dockerを使用したインストール手順（デプロイ）](#dockerを使用したインストール手順デプロイ)
+  - [目次](#目次)
+  - [概要](#概要)
+  - [前提条件](#前提条件)
+    - [Dockerがインストールされているか確認する方法](#dockerがインストールされているか確認する方法)
+      - [Windows](#windows)
+      - [macOS](#macos)
+      - [Ubuntu(Linux)](#ubuntulinux)
+  - [手順](#手順)
+  - [AI機能の有効化](#ai機能の有効化)
+  - [Docker Composeのコマンド](#docker-composeのコマンド)
+    - [Dockerコンテナの起動](#dockerコンテナの起動)
+    - [Dockerコンテナの停止](#dockerコンテナの停止)
+    - [Dockerコンテナの再起動](#dockerコンテナの再起動)
+  - [トラブルシューティング](#トラブルシューティング)
+    - [ログの確認](#ログの確認)
+    - [コマンドラインでのパスワードのリセット方法](#コマンドラインでのパスワードのリセット方法)
+  - [不要なDockerリソースのクリーンアップ](#不要なdockerリソースのクリーンアップ)
+  
+## 概要
+この手順では、Dockerを使用してアプリケーションをインストールする方法を説明します。
+Dockerを使用することで、アプリケーションの環境構築を簡単に行うことができます。
+また，ドッカー上ではapacheとuwsgiを使用しているので，アプリケーションのパフォーマンスが向上します．
+
+## 前提条件
+- Dockerがインストールされていること
+- Docker Composeがインストールされていること
+
+### Dockerがインストールされているか確認する方法
+下記を実行して、Dockerがインストールされているか確認します。
+- もしインストールされていない場合は、[Dockerのインストール](https://docs.docker.com/get-docker/)を参照してください。
+ - Linuxにインストールする場合はGUIのないDockerのインストールをお勧めします。（Docker Desktopは無料で使用するには制限があるため）
+#### Windows
+
+以下のコマンドを `cmd` または `PowerShell` で実行して、DockerとDocker Composeがインストールされているか確認します。
+
+```sh
+docker --version
+docker-compose --version
+```
+
+#### macOS
+
+以下のコマンドをターミナルで実行して、DockerとDocker Composeがインストールされているか確認します。
+
+```sh
+docker --version
+docker-compose --version
+```
+
+#### Ubuntu(Linux)
+
+以下のコマンドをターミナルで実行して、DockerとDocker Composeがインストールされているか確認します。
+
+```sh
+docker --version
+docker-compose --version
+```
+
+## 手順
+
+1. このリポジトリをクローンします．
+- すでにクローンしている場合や,[環境構築](../doc/install.md)を行った場合はこの手順は不要です．
+   ```sh
+   git clone https://github.com/syun100000/archive_system_django.git
+    ```
+
+1. クローンしたディレクトリに移動します．
+    ```sh
+    cd archive_system_django
+    ```
+2. shファイルを実行します．
+    ### Linux or macOS
+    既に作成済みのスクリプトが存在するので，`linux`であればスクリプトを実行するだけでアプリケーションを起動することができます．
+    test_docker_build.shもしくはprod_docker_build.shを実行してください．
+    - test_docker_build.shはアプリケーションを8000ポートで起動します．
+    - prod_docker_build.shはアプリケーションを80ポートで起動します．
+
+        **例: test_docker_build.shを実行する場合**
+        ```sh
+        sh test_docker_build.sh
+        ``` 
+        **例: prod_docker_build.shを実行する場合**
+        ```sh
+        sh prod_docker_build.sh
+        ```
+    ### Windows
+    現在のバージョンではWindowsで利用可能なスクリプトを作成していないので下記の手順に従いアプリケーションを起動してください．
+    1. 使用するDocker Composeファイルを選択します．
+    ディレクトリには`pond-docker-compose.yml`と`test-docker-compose.yml`が存在します．
+    - `pond-docker-compose.yml`はアプリケーションを80ポートで起動します．
+    - `test-docker-compose.yml`はアプリケーションを8000ポートで起動します．
+    2. Docker Composeを使用してアプリケーションを起動します．
+    - `pond-docker-compose.yml`を使用する場合
+        ```powershell
+        docker-compose -f test-docker-compose.yml up -d
+        ```
+    - `test-docker-compose.yml`を使用する場合
+        ```powershell
+        docker-compose -f test-docker-compose.yml up -d
+        ```
+
+3. ブラウザで `http://localhost:8000` もしくは `http://localhost` にアクセスし、アプリが正しく動作していることを確認してください。
+これで、Dockerを使用したデプロイ方法の手順は完了です。
+
+## AI機能の有効化
+AI機能を有効化するには、[こちら](../doc/ai.md)を参照してください。
+## Docker Composeのコマンド
+よく使用するDocker Composeのコマンドを以下に示します。
+### Dockerコンテナの起動
+- Dockerコンテナを起動するには以下のコマンドを使用します。
+    ```sh
+    docker-compose up -d
+    ```
+
+### Dockerコンテナの停止
+- Dockerコンテナを停止するには以下のコマンドを使用します。
+    ```sh
+    docker-compose down
+    ```
+
+### Dockerコンテナの再起動
+- Dockerコンテナを再起動するには以下のコマンドを使用します。
+    ```sh
+    docker-compose up -d
+    ```
+
+## トラブルシューティング
+### ログの確認
+- ログを確認するには以下のコマンドを使用します。
+    ```sh
+    docker-compose logs
+    ```
+- 特定のサービスのログを確認するには以下のコマンドを使用します。
+    ```sh
+    docker-compose logs [サービス名]
+    ```
+- ログをリアルタイムで確認するには以下のコマンドを使用します。
+    ```sh
+    docker-compose logs -f
+    ```
+- 特定のサービスのログをリアルタイムで確認するには以下のコマンドを使用します。
+    ```sh
+    docker-compose logs -f [サービス名]
+    ```
+
+### コマンドラインでのパスワードのリセット方法
+
+1. まず，ドッカーなどのリセットしたいシステムのSHELLに入ります。
+
+    ```sh
+    docker-compose exec web sh
+    ```
+2. 仮想環境に入ります。
+
+    ```sh
+    source /opt/venv/bin/activate
+    ```
+
+3. `reset_password.py`を実行し画面の指示に従う。
+
+    ```sh
+    python reset_password.py
+    ```
+
+これで、パスワードのリセットが完了です。
+
+
+## 不要なDockerリソースのクリーンアップ
+Dockerでビルドを繰り返していると、不要なDockerリソースがたまっていくことがあります。
+その場合は、以下のコマンドを使用して不要なDockerリソースをクリーンアップすることができます。
+ - 使用していないDockerリソースをクリーンアップするには、以下のコマンドを使用します。
+
+    ```sh
+    docker system prune -a
+    ```
+
+    このコマンドは、未使用のすべてのデータ（停止したコンテナ、未使用のネットワーク、未使用のボリューム、未使用のイメージ）を削除します。
+

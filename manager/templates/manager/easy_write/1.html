@@ -1,0 +1,43 @@
+<div class="{{class_name}}">
+    <h2>{{ headline }}</h2>
+    <p>{{ text }}</p>
+    <div class="contents">
+        {% for content in contents %}
+            {% if content.type == 'image' %}
+                <div class="content-item">
+                    <img src="{{ content.url }}" alt="{{ content.name }}" class="img-fluid">
+                    <p class="image-name">{{ content.name }}</p>
+                    <a class="btn btn-primary" href="{% url 'upload_contents_detail' content.id %}" target="_blank">コンテンツの詳細</a>
+            {% endif %}
+            {% if content.type == 'video' %}
+                <div class="content-item">
+                    <video src="{{ content.url }}" controls class="video-fluid"></video>
+                    <p class="video-name">{{ content.name }}</p>
+                    <a class="btn btn-primary" href="{% url 'upload_contents_detail' content.id %}" target="_blank">コンテンツの詳細</a>
+                </div>
+            {% endif %}
+            {% if content.type == 'youtube' %}
+                <div class="content-item">
+                    <iframe src="{{ content.url }}" frameborder="0" allowfullscreen class="youtube-iframe"></iframe>
+                    <p class="youtube-title">{{ content.name }}</p>
+                    <a class="btn btn-primary" href="{% url 'upload_contents_detail' content.id %}" target="_blank">コンテンツの詳細</a>
+                </div>
+            {% endif %}
+            {% if content.type == 'audio' %}
+                <div class="content-item">
+                    <audio src="{{ content.url }}" controls class="audio-player"></audio>
+                    <p class="audio-name">{{ content.name }}</p>
+                    <a class="btn btn-primary" href="{% url 'upload_contents_detail' content.id %}" target="_blank">コンテンツの詳細</a>
+                </div>
+            {% endif %}
+            {% if content.type == 'pdf' %}
+                <div class="content-item">
+                    <a href="{{ content.url }}" target="_blank" class="pdf-link">{{ content.name }}</a>
+                    <p class="pdf-name">{{ content.name }}</p>
+                    <a class="btn btn-primary" href="{% url 'upload_contents_detail' content.id %}" target="_blank">コンテンツの詳細</a>
+                </div>
+            {% endif %}
+        {% endfor %}
+    </div>
+</div>
+

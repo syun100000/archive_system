@@ -1,0 +1,59 @@
+services:
+  db1:
+    image: mysql:8.0
+    environment:
+      MYSQL_DATABASE: archive_system
+      MYSQL_USER: archive_system
+      MYSQL_PASSWORD: archive_system
+      MYSQL_ROOT_PASSWORD: archive_system
+    volumes:
+      - mysql_data1:/var/lib/mysql
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h localhost"]
+      interval: 10s
+      timeout: 5s
+      retries: 5
+    restart: always  # 自動再起動設定を変更
+  web:
+    build: .
+    volumes:
+      - static_volume:/app/staticfiles
+      - config_volume:/app/archive_system/config
+      - media_volume:/app/media  # メディアボリュームを追加
+    ports:
+      - "8000:80" # ポートのマッピング　ホスト側のポート:コンテナ側のポート
+    depends_on:
+      db1:
+        condition: service_healthy
+    entrypoint: ["/app/entrypoint.sh"]
+    restart: always  # 自動再起動設定を変更
+  phpmyadmin:
+    image: phpmyadmin/phpmyadmin
+    environment:
+      PMA_HOST: db1
+      MYSQL_ROOT_PASSWORD: archive_system
+    ports:
+      - "8889:80"
+    depends_on:
+      db1:
+        condition: service_healthy
+    restart: always  # 自動再起動設定を変更
+  # ollama:
+  #   image: ollama/ollama
+  #   volumes:
+  #     - ollama:/root/.ollama
+  #   ports:
+  #     - "11434:11434"
+  #   restart: always  # 自動再起動設定を変更
+
+volumes:
+  mysql_data1:
+  static_volume:
+  config_volume:
+  ollama:
+  media_volume:  # メディアボリューム
+    driver: local # ドライバーを指定
+    driver_opts:
+      type: none  # ドライバータイプを指定
+      o: bind # バインドマウントを指定
+      device: ./media # メディアボリュームのマ��ント先を指定

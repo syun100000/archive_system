@@ -1,0 +1,119 @@
+{% extends 'manager/manager_base.html' %}
+{% load static %}
+{% block head_title %} タグ管理 {% endblock %}
+{% block manager_content %}
+    <h1>タグ管理</h1>
+    <p>現在の登録タグ数: {{ tags_count }}</p>
+    {% if user.is_staff and not user.is_superuser %}
+        <div class="alert alert-warning" role="alert">
+            スタッフ権限では閲覧のみ可能です。
+        </div>
+    {% endif %}
+    {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+    {% endif %}
+    <!-- 検索および並び替えフォーム -->
+    <form action="{% url 'tags' %}" method="GET" class="form-inline mb-3">
+        <div class="form-group mr-3">
+            <label for="search" class="mr-2">タグ名または説明:</label>
+            <input type="text" class="form-control" id="search" name="search" value="{{ search }}">
+        </div>
+        <div class="form-group mr-3">
+            <label for="sort" class="mr-2">並び替え:</label>
+            <select name="sort" id="sort" class="form-control">
+                <option value="name" {% if sort == "name" %}selected{% endif %}>名前順</option>
+                <option value="upload_count_desc" {% if sort == "upload_count_desc" %}selected{% endif %}>アップロード数 降順</option>
+                <option value="upload_count_asc" {% if sort == "upload_count_asc" %}selected{% endif %}>アップロード数 昇順</option>
+                <option value="report_count_desc" {% if sort == "report_count_desc" %}selected{% endif %}>記事数 降順</option>
+                <option value="report_count_asc" {% if sort == "report_count_asc" %}selected{% endif %}>記事数 昇順</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">フィルター</button>
+        <button type="button" onclick="location.href='{% url 'tags' %}'" class="btn btn-secondary ml-2">リセット</button>
+    </form>
+    <!-- タグの一覧 -->
+    <form action="{% url 'tags_bulk_delete_unused' %}" method="POST" id="bulk-delete-form" onsubmit="return confirm('選択された未使用タグを一括で削除します。よろしいですか？');">
+        {% csrf_token %}
+        <table class="table table-bordered">
+            <thead>
+                <tr>
+                    {% if user.is_superuser and tag.upload_count == 0 and tag.report_count == 0 %}
+                    <th>
+                        <input type="checkbox" id="select_all_tags">
+                    </th>
+                    {% endif %}
+                    <th>タグ名</th>
+                    <th>説明</th>
+                    <th>登録アップロードコンテンツ数</th>
+                    <th>登録記事数</th>
+                    <th>アクション</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for tag in tags %}
+                <tr>
+                    {% if user.is_superuser and tag.upload_count == 0 and tag.report_count == 0 %}
+                    <td>
+                        <input type="checkbox" name="tag_ids" value="{{ tag.id }}" class="tag-checkbox">
+                    </td>
+                    {% endif %}
+                    <td><a href="{% url 'tag_detail' tag.name %}">{{ tag.name }}</a></td>
+                    <td>{{ tag.description }}</td>
+                    <td>{{ tag.upload_count }}</td>
+                    <td>{{ tag.report_count }}</td>
+                    <td>
+                        {% if tag.upload_count == 0 and tag.report_count == 0 %}
+                            <form action="{% url 'tags_bulk_delete_unused' %}" method="POST" style="display:inline;">
+                                {% csrf_token %}
+                                <input type="hidden" name="tag_ids" value="{{ tag.id }}">
+                                <button type="submit" class="btn btn-sm btn-danger" onclick="return confirm('このタグを削除します。よろしいですか？');">削除</button>
+                            </form>
+                        {% else %}
+                            <span class="text-muted">使用中</span>
+                        {% endif %}
+                    </td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+        <!-- 一括削除ボタン -->
+        {% if user.is_superuser and tag.upload_count == 0 and tag.report_count == 0 %}
+            <button type="submit" class="btn btn-danger">選択した未使用タグを一括削除</button>
+        {% endif %}
+    </form>
+    
+    <!-- ページネーション -->
+    <div class="pagination">
+        <span class="step-links">
+            {% if tags.has_previous %}
+                <a href="?page=1&search={{ search }}&sort={{ sort }}">&laquo; 最初</a>
+                <a href="?page={{ tags.previous_page_number }}&search={{ search }}&sort={{ sort }}">前へ</a>
+            {% endif %}
+
+            <span class="current">
+                Page {{ tags.number }} of {{ tags.paginator.num_pages }}.
+            </span>
+
+            {% if tags.has_next %}
+                <a href="?page={{ tags.next_page_number }}&search={{ search }}&sort={{ sort }}">次へ</a>
+                <a href="?page={{ tags.paginator.num_pages }}&search={{ search }}&sort={{ sort }}">最後 &raquo;</a>
+            {% endif %}
+        </span>
+    </div>
+
+    <!-- JavaScript for Select All -->
+    <script>
+        // すべて選択のチェックボックスがクリックされたときの処理
+        document.getElementById('select_all_tags').addEventListener('click', function() {
+            const checkboxes = document.querySelectorAll('.tag-checkbox');
+            checkboxes.forEach(function(checkbox) {
+                checkbox.checked = event.target.checked;
+            });
+        });
+    </script>
+{% endblock %}

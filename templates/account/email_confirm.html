@@ -1,0 +1,20 @@
+{% extends "ArchiveViewer/base.html" %}
+{% block head_title %}メール確認{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">メール確認</div>
+                <div class="card-body">
+                    <p>メールアドレスの確認が完了しました。</p>
+                    <form method="post">
+                        {% csrf_token %}
+                        {{form.as_p}}
+                        <button type="submit" class="btn btn-primary">続行</button>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

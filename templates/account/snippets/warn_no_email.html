@@ -1,0 +1,18 @@
+{% extends "ArchiveViewer/base.html" %}
+{% block head_title %}メールアドレス未設定{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">メールアドレス未設定</div>
+                <div class="card-body">
+                    <p>メールアドレスが設定されていません。メールアドレスを設定してください。</p>
+                    <a class="btn btn-primary" href="{% url 'account_email' %}">メール設定ページへ</a>
+                </div>
+            </div>
+            <a class="mt-3" href="{% url 'index' %}">ホームに戻る</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

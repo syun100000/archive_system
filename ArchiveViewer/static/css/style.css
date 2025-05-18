@@ -1,0 +1,256 @@
+body {
+    background-color: white;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 300;
+}
+
+.header {
+    background-color: #6B4978;
+}
+/* ナビゲーションバー */
+.navbar-light .navbar-nav .nav-link:hover {
+    color: #6B4978
+}
+/* サイトタイトル部分 */
+.site_title {
+    /* margin: 2% 0;
+    font-family: 'Noto Sans JP', sans-serif;
+    font-weight: 700; */
+    /* 優先にしています */
+    color: #6B4978 !important;  
+
+}
+
+/* .header .nav-link {
+    color: white;
+}
+
+.header .nav-link:hover {
+    color: #ddd;
+} */
+
+/* .footer {
+    position: fixed;
+    left: 0;
+    bottom: 0;
+    width: 100%;
+    background-color: #6B4978;
+    color: white;
+    text-align: center;
+    padding: 1%;
+} */
+
+.main {
+    margin: 0 3% 5%;
+    padding-top: 1%;
+}
+
+
+p{
+    font-family: 'Noto Sans JP', sans-serif;
+}
+a{
+    font-family: 'Noto Sans JP', sans-serif;
+    color: #67038f99;
+}
+h1 {
+    color: #6B4978;
+    text-align: left;
+}
+
+h2{
+    color: #6B4978;
+    text-align: left;
+}
+h3{
+    color: #6B4978;
+    text-align: left;
+}
+h4{
+    color: #6B4978;
+    text-align: left;
+}
+h5{
+    color: #6B4978;
+    text-align: left;
+}
+
+.main {
+    margin: 0 3%;
+    padding-top: 1%;
+}
+
+.search-results {
+    margin: 2% 0;
+    padding: 1%;
+    border: 1px solid #ddd;
+    border-radius: .25rem;
+}
+
+.search-results h3 {
+    margin-top: 1%;
+}
+
+.search-form {
+    margin-top: 2%;
+}
+
+.search-form .error {
+    color: #f00;
+    font-size: .75rem;
+}
+
+.recommended-contents {
+    margin: 2% 0;
+    padding: 1%;
+    border: 1px solid #ddd;
+    border-radius: .25rem;
+}
+
+.recommended-contents p {
+    margin: .5rem 0;
+}
+
+.table-custom {
+    width: 100%;
+    border-collapse: collapse;
+}
+
+.table-custom th,
+.table-custom td {
+    padding: 1%;
+    border: 1px solid #ddd;
+    text-align: left;
+}
+
+.table-custom th {
+    background-color: #6B4978;
+    color: white;
+}
+
+.table-custom tr:nth-child(even) {
+    background-color: #f2f2f2;
+}
+
+.pagination-container {
+    margin-top: 2%;
+}
+
+.pagination-container .page-item.active .page-link {
+    background-color: #6B4978;
+    border-color: #6B4978;
+}
+
+.pagination-container .page-link {
+    color: #6B4978;
+    background-color: #fff;
+    border: 1px solid #dee2e6;
+}
+
+.pagination-container .page-link:hover {
+    color: #fff;
+    background-color: #6B4978;
+    border-color: #6B4978;
+}
+
+.btn-primary {
+    background-color: #6B4978;
+    border-color: #6B4978;
+}
+
+.btn-primary:hover {
+    background-color: #6b1d9e;
+    border-color: #6b1d9e;
+}
+.btn-primary:active {
+    background-color: #6b1d9e;
+    border-color: #6b1d9e;
+}
+.btn-primary:focus {
+    background-color: #6b1d9e;
+    border-color: #6b1d9e;
+}
+
+
+.btn-outline-primary {
+    color: #6B4978;
+    border-color: #6B4978;
+}
+.btn-outline-primary:hover {
+    color: #fff;
+    background-color: #6b1d9e;
+    border-color: #6b1d9e;
+}
+.btn-outline-primary:active {
+    color: #fff;
+    background-color: #6b1d9e;
+    border-color: #6b1d9e;
+}
+.btn-outline-primary:focus {
+    color: #fff;
+    background-color: #6b1d9e;
+    border-color: #6b1d9e;
+}
+
+
+
+.dropdown-item.active, .dropdown-item:active {
+    color: #fff;
+    text-decoration: none;
+    background-color: #6b1d9e
+}
+
+.thumbnail img {
+    width: 100%;
+    height: auto;
+    cursor: pointer;
+}
+
+@media (min-width: 768px) {
+  .main {
+    margin: 0 5%;
+  }
+
+  .search-results,
+  .recommended-contents {
+    margin: 2rem 0;
+    padding: 1rem;
+  }
+
+  .table-custom th,
+  .table-custom td {
+    padding: 1rem;
+  }
+
+  .pagination-container {
+    margin-top: 20px;
+  }
+
+  .thumbnail img {
+    width: 30%;
+    height: 30%;
+  }
+}
+
+/* フォーム */
+.form-check-input:checked {
+    background-color: #6b1d9e;
+    border-color: #6b1d9e;
+}
+
+/* .selected {
+    border: 7px solid #6b1d9e;
+} */
+
+img {
+    max-width: 100%;
+    height: auto;
+}
+
+video {
+    max-width: 100%;
+    height: auto;
+}
+figcaption{
+    text-align: center;
+}
