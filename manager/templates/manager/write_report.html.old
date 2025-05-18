@@ -1,0 +1,76 @@
+{% extends 'manager/manager_base.html' %}
+{% load static %}
+{% block head %}
+<link href="{% static 'manager/css/tagsinput.css' %}" rel="stylesheet" type="text/css">
+<script src="{% static 'manager/js/tagsinput.js' %}"></script>
+{% endblock %}
+{% block head_title %} {% if edit %}記事の編集{% else %}記事の作成{% endif %} {% endblock %}
+{% block manager_content %}
+<div data-page="{% if edit %}edit{% else %}write{% endif %}"></div>
+<h1 id="title"></h1>
+    <!-- <script type="text/javascript" src="{% static "ckeditor/ckeditor-init.js" %}"></script>
+    <script type="text/javascript" src="{% static "ckeditor/ckeditor/ckeditor.js" %}"></script> -->
+    <!-- <script src="{% static 'django_ckeditor_5/src/ckeditor.js' %}"></script>  CKEditor5のJSファイルを読み込む -->
+    <script src="ckeditor5/src/ckeditor.js"></script>
+    <form action="" method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="title">タイトル:</label>
+            <input type="text" class="form-control" id="title" name="title" value="{{ title }}">
+        </div>
+        <div class="form-group text-center">
+            <label for="description">記事の内容:</label>
+            <!-- <textarea id="description" name="description" class="form-control">{{ description }}</textarea> -->
+            <!-- <script>
+                CKEDITOR.replace('description');
+            </script> -->
+            <div class="ck-editor-container">
+                <textarea id="description" name="text" class="django_ckeditor_5" >
+                </textarea>
+                <div></div> <!-- this div or any empty element is required -->
+                <span class="word-count" id="id_text_script-word-count"></span>
+           </div>
+           <input type="hidden" id="id_text_script-ck-editor-5-upload-url" data-upload-url="/ckeditor5/image_upload/" data-csrf_cookie_name="new_csrf_cookie_name">
+           <span id="id_text_script-span"><script id="id_text_script" type="application/json">{your ckeditor config}</script></span>
+            <script>
+                ClassicEditor
+                    .create(document.querySelector('#description'))
+                    .catch(error => {
+                        console.error(error);
+                    });
+            </script>
+        </div>
+        <div class="form-group">
+            <label for="tags">タグ:</label>
+            <input id="tags" name="tags" type="text" data-role="tagsinput" value="{{ tags }}" style="display: none;">
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="is_recommend" name="is_recommend" value="1"
+                {% if is_recommend %}checked{% endif %}>
+            <label class="form-check-label" for="is_recommend">おすすめ記事</label>
+        </div>
+        <div class="form-check">
+            <input type="checkbox" class="form-check-input" id="is_public" name="is_public" value="1"
+                {% if is_public %}checked{% endif %}>
+            <label class="form-check-label" for="is_public">記事を公開</label>
+        </div>
+        {% if edit %}
+        <input type="hidden" name="report_id" value="{{ report.id }}">
+        {% endif %}
+        <button type="submit" class="btn btn-primary" id="submit"></button>
+    </form>
+<script>
+    $(document).ready(function() {
+        //編集の時の処理
+        $('div[data-page="edit"]').each(function() {
+            $('#title').text('記事の編集');
+            $('#submit').text('更新');
+        });
+        //新規作成の時の処理
+        $('div[data-page="write"]').each(function() {
+            $('#title').text('記事の作成');
+            $('#submit').text('投稿');
+        });
+    });
+</script>
+{% endblock %}

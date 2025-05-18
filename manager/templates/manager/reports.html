@@ -1,0 +1,254 @@
+{% extends 'manager/manager_base.html' %}
+{% load static %}
+{% block head_title %} 記事一覧 {% endblock %}
+{% block manager_content %}
+<h1>記事一覧</h1>
+{% if not user.is_superuser %}
+<div class="alert alert-warning" role="alert">
+    管理者以外は自分の記事のみ編集できます。
+</div>
+{% endif %}
+<form id="filter-form" method="GET">
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-md-3">
+            <label for="sort">並び替え:</label>
+            <select name="sort" id="sort" class="form-control">
+                <option value="-created_at" {% if "-created_at" == sort %}selected{% endif %}>作成日時 降順</option>
+                <option value="created_at" {% if "created_at" == sort %}selected{% endif %}>作成日時 昇順</option>
+                <option value="-title" {% if "-title" == sort %}selected{% endif %}>タイトル 降順</option>
+                <option value="title" {% if "title" == sort %}selected{% endif %}>タイトル 昇順</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="report_id">ID:</label>
+            <input type="number" name="report_id" id="report_id" value="{{report_id}}" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label for="start_date">開始日:</label>
+            <input type="date" name="start_date" id="start_date" value="{{start_date}}" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label for="end_date">終了日:</label>
+            <input type="date" name="end_date" id="end_date" value="{{end_date}}" class="form-control">
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-md-3">
+            <label for="title">タイトル:</label>
+            <input type="text" name="title" id="title" value="{{title}}" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label for="is_recommend">おすすめ状態:</label>
+            <select name="is_recommend" id="is_recommend" class="form-control">
+                <option value="">すべて</option>
+                <option value="True" {% if is_recommend == "True" %}selected{% endif %}>おすすめ</option>
+                <option value="False" {% if is_recommend == "False" %}selected{% endif %}>非おすすめ</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="is_public">公開状態:</label>
+            <select name="is_public" id="is_public" class="form-control">
+                <option value="">すべて</option>
+                <option value="True" {% if is_public == "True" %}selected{% endif %}>公開中</option>
+                <option value="False" {% if is_public == "False" %}selected{% endif %}>非公開</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="created_by">投稿者ID:</label>
+            <input type="number" name="created_by" id="created_by" value="{{created_by}}" class="form-control">
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-md-6">
+            <button type="submit" class="btn btn-primary">フィルター</button>
+            <button type="button" onclick="location.href='{% url 'reports' %}'" class="btn btn-secondary">リセット</button>
+        </div>
+    </div>
+</form>
+<p>検索結果: {{ reports.paginator.count }}件</p>
+    {% if reports %}
+        <table class="table table-bordered mt-3">
+            <thead>
+                <tr>
+                    <th>ID</th>
+                    <th>タイトル</th>
+                    <th>投稿日時</th>
+                    <th>おすすめ記事</th>
+                    <th>記事を公開</th>
+                    <th>記事の投稿者 (ID)</th>
+                    <th>編集</th>
+                    <th>選択 全て選択:
+                        <input type="checkbox" id="select_all" class="form-check-input">
+                    </th>
+                </tr>
+            </thead>
+            <tbody>
+            {% for report in reports %}
+                <tr>
+                    <td>{{report.id}}</td>
+                    <td>
+                        <a href="{% url 'report_contents_detail' report.id %}">
+                            {{report.title}}
+                        </a>
+                    </td>
+                    <td>{{report.created_at}}</td>
+                    <td>
+                        {% if report.is_recommend %}
+                            おすすめ中
+                        {% else %}
+                            おすすめではない
+                        {% endif %}
+                    </td>
+                    <td>
+                        {% if report.is_public %}
+                            公開中
+                        {% else %}
+                            非公開
+                        {% endif %}
+                    </td>
+                    <td>{{report.created_by.last_name}} {{report.created_by.first_name}} ({{report.created_by.id}})</td>
+                    <td>
+                        {% if report.created_by == user or user.is_superuser %}
+                            <a href="{% url 'report_edit' report.id %}" class="btn btn-primary">編集</a>
+                        {% endif %}
+
+                    </td>
+                    <td>
+                        {% if report.created_by == user or user.is_superuser %}
+                            <input class= "form-check-input report_checkox" type="checkbox" name="report" value="{{report.id}}" ">
+                        {% endif %}
+                    </td>
+                </tr>
+            {% endfor %}
+            </tbody>
+        </table>
+        <!-- ページネーションナビゲーションを追加 -->
+        <div class="pagination-container">
+            <nav aria-label="Page navigation">
+                <ul class="pagination justify-content-center">
+                    {% if reports.has_previous %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page=1&sort={{ sort }}&report_id={{ report_id }}&start_date={{ start_date }}&end_date={{ end_date }}&is_recommend={{ is_recommend }}&is_public={{ is_public }}&created_by={{ created_by }}" tabindex="-1" aria-disabled="true">&laquo; 最初</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ reports.previous_page_number }}&sort={{ sort }}&report_id={{ report_id }}&start_date={{ start_date }}&end_date={{ end_date }}&is_recommend={{ is_recommend }}&is_public={{ is_public }}&created_by={{ created_by }}">前</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#" tabindex="-1" aria-disabled="true">&laquo; 最初</a>
+                        </li>
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">前</a>
+                        </li>
+                    {% endif %}
+
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#">
+                            ページ {{ reports.number }} of {{ reports.paginator.num_pages }}
+                        </a>
+                    </li>
+
+                    {% if reports.has_next %}
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ reports.next_page_number }}&sort={{ sort }}&report_id={{ report_id }}&start_date={{ start_date }}&end_date={{ end_date }}&is_recommend={{ is_recommend }}&is_public={{ is_public }}&created_by={{ created_by }}">次</a>
+                        </li>
+                        <li class="page-item">
+                            <a class="page-link" href="?page={{ reports.paginator.num_pages }}&sort={{ sort }}&report_id={{ report_id }}&start_date={{ start_date }}&end_date={{ end_date }}&is_recommend={{ is_recommend }}&is_public={{ is_public }}&created_by={{ created_by }}">最後 &raquo;</a>
+                        </li>
+                    {% else %}
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">次</a>
+                        </li>
+                        <li class="page-item disabled">
+                            <a class="page-link" href="#">最後 &raquo;</a>
+                        </li>
+                    {% endif %}
+                </ul>
+            </nav>
+        </div>
+        <script>
+            //このスクリプトは表示されている記事のチェックボックスをすべて選択する。
+            const report_checkox = document.getElementsByClassName("report_checkox");   // 記事のチェックボックス
+            const select_all = document.getElementById("select_all"); // すべて選択のチェックボックス
+
+            // すべて選択のチェックボックスがクリックされたときの処理
+            select_all.addEventListener("click", function(){
+                if (select_all.checked){
+                    for (let i = 0; i < report_checkox.length; i++){
+                        report_checkox[i].checked = true;
+                    }
+                }
+                else{
+                    for (let i = 0; i < report_checkox.length; i++){
+                        report_checkox[i].checked = false;
+                    }
+                }
+            });
+        </script>
+        <div class="row">
+            <form action="" method="POST" id="select_action">
+                {% csrf_token %}
+                <label class="col-md-2">選択した記事を</label>
+                <select name="action" id="action" class="form-control col-md-2">
+                    <option value="recommend">おすすめにする</option>
+                    <option value="unrecommend">おすすめを解除する</option>
+                    <option value="public">公開する</option>
+                    <option value="unpublic">非公開にする</option>
+                    <option value="delete">削除する</option>
+                </select>
+                <button type="submit" class="btn btn-primary">実行</button>
+            </form>
+        </div>
+        <script>
+            //このスクリプトは記事のチェックボックスの値を取得し、選択されたアクションを実行するために
+            //フォームを作成して送信する。
+
+            // 選択アクションのフォームが送信されたときの処理
+            select_action.addEventListener("submit", function(e){
+                e.preventDefault(); // デフォルトの動作をキャンセル
+                const report_checkox = document.getElementsByClassName("report_checkox");   // 記事のチェックボックス
+                const select_action = document.getElementById("select_action"); // 選択アクションのフォーム
+                const action = document.getElementById("action").value; // 選択されたアクションを取得
+                const report_ids = [];  // 選択された記事のIDを格納する配列
+                let checked_count = 0;  // 選択されたチェックボックスの数を格納する変数
+                for (let i = 0; i < report_checkox.length; i++){    // 選択された記事のIDを配列に格納
+                    if (report_checkox[i].checked){
+                        report_ids.push(report_checkox[i].value);
+                        checked_count++;
+                    }
+                }
+                if (checked_count > 0){
+                    const form = document.createElement("form");    // フォームを作成
+                    const csrf = document.createElement("input");   // CSRFトークンを作成
+                    const action_input = document.createElement("input");   // アクションを作成
+                    const report_ids_input = document.createElement("input");   // 記事IDを作成
+                    csrf.setAttribute("type", "hidden");
+                    csrf.setAttribute("name", "csrfmiddlewaretoken");
+                    csrf.setAttribute("value", "{{csrf_token}}");
+                    action_input.setAttribute("type", "hidden");
+                    action_input.setAttribute("name", "action");
+                    action_input.setAttribute("value", action);
+                    report_ids_input.setAttribute("type", "hidden");
+                    report_ids_input.setAttribute("name", "report_ids");
+                    report_ids_input.setAttribute("value", report_ids);
+                    form.appendChild(csrf);
+                    form.appendChild(action_input);
+                    form.appendChild(report_ids_input);
+                    form.setAttribute("action", "");
+                    form.setAttribute("method", "POST");
+                    document.body.appendChild(form);
+                    if (confirm("選択された記事に対してアクションを実行します。よろしいですか？")){
+                        form.submit();
+                    }
+                }
+            else{
+                // 記事が選択されていない場合はアラートを表示
+                alert("記事が選択されていません。");
+            }
+            });
+        </script>
+    {% else %}
+        <p>検索結果がありません。</p>
+    {% endif %}
+{% endblock %}

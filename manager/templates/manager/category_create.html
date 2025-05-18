@@ -1,0 +1,41 @@
+{% extends 'manager/manager_base.html' %}
+{% block head_title %} カテゴリー作成 {% endblock %}
+{% block manager_content %}
+    <h1>カテゴリー作成</h1>
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    <a href="{% url 'category_list' %}" class="btn btn-secondary">カテゴリー一覧に戻る</a>
+    <form action="{% url 'category_create' %}" method="post">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="name">カテゴリー名</label>
+            <input type="text" name="name" id="name" class="form-control">
+        </div>
+        <div class="form-group">
+            <label for="description">カテゴリーの説明</label>
+            <textarea name="description" id="description" class="form-control"></textarea>
+        </div>
+        <div class="form-group">
+            <label for="parent">親カテゴリー</label>
+            <select name="parent" id="parent" class="form-control">
+                <option value="">なし</option>
+                {% for id, name in categories %}
+                    <option value="{{ id }}" {% if request.POST.parent == id|stringformat:"s" %}selected{% endif %}>
+                        {{ name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div>
+            <label for="is_active">有効フラグ</label>
+            <input type="checkbox" name="is_active" id="is_active" checked>
+        </div>
+        <button type="submit" class="btn btn-primary">カテゴリーを追加</button>
+    </form>
+{% endblock %}

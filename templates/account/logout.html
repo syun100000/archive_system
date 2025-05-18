@@ -1,0 +1,17 @@
+{% extends "ArchiveViewer/base.html" %}
+{% block head_title %}ログアウト{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">ログアウト</div>
+                <div class="card-body">
+                    <p>ログアウトしました。</p>
+                    <a class="btn btn-primary" href="{% url 'index' %}">ホームに戻る</a>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+{% endblock %}

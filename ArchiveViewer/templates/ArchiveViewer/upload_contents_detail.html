@@ -1,0 +1,223 @@
+{% extends 'ArchiveViewer/base.html' %}
+{% load static %}
+{% block head_title %} {{ upload_contents.title }} {% endblock %}
+{% block content %}
+    {% if  upload_contents.published == False %}
+    <div class="alert alert-warning" role="alert">
+        <p>このコンテンツは非公開に設定されています！</p>
+    </div>
+    {% endif %}
+    {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+    {% endif %}
+    <script src="
+    https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/build/pdf.min.js
+    "></script>
+    <link href="
+    https://cdn.jsdelivr.net/npm/pdfjs-dist@3.11.174/web/pdf_viewer.min.css
+    " rel="stylesheet">
+    <div class="container">
+        <h2>アーカイブ詳細</h2>
+        {% if user.is_authenticated %}
+        <div class="row">
+            <div class="col-md-auto">
+                    {% if is_favorite == 0 %}
+                    <form action="{% url 'upload_favorite_add' %}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="file_id" value="{{upload_contents.file_id}}">
+                        <button type="submit" class="btn btn-primary">お気に入りに追加</button>
+                    </form>
+                    {% elif is_favorite == 1 %}
+                    <form action="{% url 'upload_favorite_delete' %}" method="post">
+                        {% csrf_token %}
+                        <input type="hidden" name="file_id" value="{{upload_contents.file_id}}">
+                        <button type="submit" class="btn btn-secondary">お気に入りから削除</button>
+                    </form>
+                    {% endif %}
+                </div>
+            {% if user.is_superuser or can_edit_upload %}
+            <div class="col-md-auto">
+                    <script src="{% static 'js/upload_contents_detail.js' %}"></script>
+                    <button type="button" class="btn btn-light" onclick="get_html_code('{{ upload_contents.file_id }}', '{{ content_type }}')">記事用埋め込みコードを取得</button>
+                    <div id = 'upload_contents_detail_url' data-url="{% url 'upload_contents_detail' upload_contents.file_id %}"></div>
+                    <div id = 'file_path' data-url="{{ upload_contents.file_path }}"></div>
+                    <div id = 'file_name' data-name="{{ upload_contents.file_name }}"></div>
+            </div>
+            <div class="col-md-auto">
+                <a href="{% url 'upload_edit' upload_contents.file_id %}" class="btn btn-primary">編集</a>
+            </div>
+            <div class="col-md-auto">
+            </div>
+            {% endif %}
+        </div>
+        {% endif %}
+
+        <table class="table table-bordered" style="margin-top: 20px;" >
+            <tbody>
+                <tr>
+                    <th style="width: 9ch;">タイトル</th>
+                    <td>{{ upload_contents.title }}</td>
+                </tr>
+                {% comment %} もし画像があれば表示 {% endcomment %}
+                {% if content_type == 'image' %}
+                <tr>
+                    <th>画像</th>
+                    <td>
+                        <div class="text-center">
+                            <div class="thumbnail">
+                                <a href="{{ upload_contents.file_path }}" data-lightbox="gallery" data-title="{{ upload_contents.file_name }}">
+                                    <img src="{{ upload_contents.file_path }}" alt="{{ upload_contents.file_name }}" class="img-thumbnail" style="max-width: 100%; max-height: 100%;">
+                                </a>
+                                <p>{{ upload_contents.file_name }}</p>
+                            </div> 
+                        </div>
+                    </td>
+                </tr>
+                {% endif %}                
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+                <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+                <tr>
+                    <th>説明</th>
+                    <td>{{ upload_contents.comment }}</td>
+                </tr>
+                {% if upload_contents.file_path %}
+                {% if content_type == 'pdf' %}
+                    <tr>
+                        <th>PDF</th>
+                        <td>
+                            <div class="text-center mt-4" id="thumbnail-container"></div>
+                            <div class="text-center mt-4">
+                                <a href="{{ upload_contents.file_path }}" class="btn btn-primary" >PDFを表示</a>
+                                <p>{{ upload_contents.file_name }}</p>
+                            </div>
+                        </td>
+                    </tr>
+                    <script>
+                        // PDF.jsの設定
+                        // pdfjsLib.GlobalWorkerOptions.workerSrc = 'path/to/pdf.worker.js'; // CDNを使用している場合は不要
+                
+                        // Djangoのテンプレート変数からPDFのファイルパスを取得
+                        var pdfFilePath = "{{ upload_contents.file_path }}";
+                        var canvas;
+
+                        pdfjsLib.getDocument(pdfFilePath).promise.then(function(pdf) {
+                            return pdf.getPage(1);
+                        }).then(function(page) {
+                            var scale = 0.5;
+                            var viewport = page.getViewport({ scale: scale });
+                        
+                            canvas = document.createElement('canvas');
+                            var context = canvas.getContext('2d');
+                            canvas.height = viewport.height;
+                            canvas.width = viewport.width;
+                        
+                            var renderContext = {
+                                canvasContext: context,
+                                viewport: viewport
+                            };
+                            return page.render(renderContext).promise;
+                        }).then(function() {
+                            if (canvas) {  // canvasが正しく初期化されているか確認
+                                var thumbnail = canvas.toDataURL('image/png');
+                                var imgElement = document.createElement('img');
+                                imgElement.src = thumbnail;
+                                document.getElementById('thumbnail-container').appendChild(imgElement);
+                            } else {
+                                console.error('Canvas is not initialized.');
+                            }
+                        });
+                    </script>
+                {% elif content_type == 'audio' %}
+                    <tr>
+                        <th>オーディオファイル</th>
+                        <td>
+                            <div class="text-center mt-4">
+                                <audio controls>
+                                    <!-- <source src="{{ upload_contents.file_path }}" type="audio/mp3"> -->
+                                    <source src="{{ encoded_file_path }}" type="audio/mp3">
+                                </audio>
+                                <p>{{ upload_contents.file_name }}</p>
+                            </div>
+                    </tr>
+                {% elif content_type == 'youtube' %}
+                    <tr>
+                        <th>YouTube</th>
+                        <td>
+                            <div class="text-center mt-4">
+                                <iframe width="auto" height="auto" src="{{ upload_contents.file_path }}" frameborder="0" allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture" allowfullscreen></iframe>
+                                <p>{{ upload_contents.file_name }}</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% elif content_type == 'video' %}
+                    <tr>
+                        <th>動画</th>
+                        <td>
+                            <div class="text-center mt-4">
+                                <video controls>
+                                    <source src="{{ upload_contents.file_path }}" type="video/mp4">
+                                </video>
+                                <p>{{ upload_contents.file_name }}</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% else %}
+                    <tr>
+                        <th>ファイル</th>
+                        <td>
+                            <div class="text-center mt-4">
+                                <a href="{{ upload_contents.file_path }}" class="btn btn-primary" download>ファイルをダウンロード</a>
+                                <p>{{ upload_contents.file_name }}</p>
+                            </div>
+                        </td>
+                    </tr>
+                {% endif %}
+                {% endif %}
+                <tr>
+                    <th>アーカイブ更新日時</th>
+                    <td>{{ upload_contents.update_at }}</td>
+                </tr>
+                <tr>
+                    <th>アーカイブ作成日時</th>
+                    <td>{{ upload_contents.insert_at }}</td>
+                </tr>
+                <tr>
+                    <th>コンテンツID</th>
+                    <td>{{ upload_contents.file_id }}</td>
+                </tr>
+            </tbody>
+        </table>
+        {% if related_contents %}
+        <div class="container mt-5">
+            <h3>関連コンテンツ</h3>
+            <div class="row">
+                {% for related_content in related_contents %}
+                <div class="col-md-4">
+                    <div class="card mb-4 box-shadow">
+                        {% if related_content.thumbnails.first.path %}
+                            <img class="card-img-top" src="{{ related_content.thumbnails.first.path }}" alt="画像">
+                        {% endif %}
+                        <div class="card-body">
+                            <h3 class="card-title">{{ related_content.title }}</h3>
+                            {% if related_content.description %}
+                                <p class="card-text">{{ related_content.description|truncatechars:50|striptags|safe }}</p>
+                            {% endif %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="btn-group">
+                                    <a href="{% url 'upload_contents_detail' related_content.file_id %}" class="btn btn-sm btn-outline-secondary">詳細を見る</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+                {% endfor %}
+            </div>
+        </div>
+        {% endif %}
+    </div>
+{% endblock %}

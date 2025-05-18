@@ -1,0 +1,248 @@
+{% extends 'manager/manager_base.html' %}
+{% load static %}
+{% block head %}
+<link href="{% static 'manager/css/tagsinput.css' %}" rel="stylesheet" type="text/css">
+<script src="{% static 'manager/js/tagsinput.js' %}"></script>
+{% endblock %}
+{% block head_title %}アーカイブコンテンツの一括アップロード{% endblock %}
+{% block manager_content %}
+<h1>アーカイブコンテンツの一括アップロード</h1>
+
+<!-- アラートメッセージの追加（非表示） -->
+<div id="alertBox" class="alert alert-danger d-none" role="alert"></div>
+<div id="successBox" class="alert alert-success d-none" role="alert"></div>
+
+<!-- 進捗バーの追加 -->
+<div id="progressContainer" class="d-none mt-3">
+    <div class="progress">
+        <div id="progressBar" class="progress-bar" role="progressbar" style="width: 0%;">0%</div>
+    </div>
+    <p id="progressText" class="mt-2">アップロード中...</p>
+</div>
+
+<form id="uploadForm" class="p-4 border rounded shadow-sm bg-light">
+    {% csrf_token %}
+    <div class="mb-3" id="fileGroup">
+        <label for="file" class="form-label fw-bold">ファイル選択</label>
+        <input class="form-control" type="file" name="upload_files" id="file" multiple>
+    </div>
+    <div class="mb-3">
+        <label for="category" class="form-label fw-bold">カテゴリー</label>
+        <select class="form-control" name="category" id="category">
+            <option value="">なし</option>
+            {% for id, name in categories %}
+                <option value="{{ id }}">{{ name }}</option>
+            {% endfor %}
+        </select>
+    </div>
+    <div class="mb-3">
+        <label for="tags" class="form-label fw-bold">タグ</label>
+        <input type="text" class="form-control" name="tags" id="tags" data-role="tagsinput" style="display: none;" list="tags_list">
+        <datalist id="tags_list">
+            {% for tag in tags %}
+                <option value="{{ tag.name }}">
+            {% endfor %}
+        </datalist>
+    </div>
+    <div class="mb-3 form-check">
+        <input type="checkbox" class="form-check-input" id="published" name="published" value="1">
+        <label class="form-check-label" for="published">公開する</label>
+    </div>
+    
+    <!-- ファイル一覧テーブル -->
+    <table id="fileListTable" class="table table-hover mt-4 shadow-sm">
+        <thead class="thead-dark">
+            <tr>
+                <th scope="col">ファイル名</th>
+                <th scope="col">サイズ (MB)</th>
+                <th scope="col">操作</th>
+            </tr>
+        </thead>
+        <tbody>
+        </tbody>
+    </table>
+
+    <button type="submit" class="btn btn-primary btn-lg btn-block mt-3">アップロード</button>
+</form>
+
+<script>
+    // ページを閉じようとする際に確認ダイアログを表示
+    let isSubmitting = false;
+
+    window.addEventListener('beforeunload', function (e) {
+        if (isSubmitting) {
+            return;
+        }
+        const confirmationMessage = 'このページを離れると、変更内容が保存されない可能性があります。';
+        e.returnValue = confirmationMessage; // Gecko, Trident, Chrome 34+
+        return confirmationMessage; // Gecko, WebKit, Chrome <34
+    });
+    document.addEventListener('DOMContentLoaded', function() {
+        const fileInput = document.getElementById('file');
+        const fileListTable = document.getElementById('fileListTable').getElementsByTagName('tbody')[0];
+        const alertBox = document.getElementById('alertBox');
+        const successBox = document.getElementById('successBox');
+        const uploadForm = document.getElementById('uploadForm');
+
+        const progressContainer = document.getElementById('progressContainer');
+        const progressBar = document.getElementById('progressBar');
+        const progressText = document.getElementById('progressText');
+
+        let selectedFiles = [];
+        const maxFiles = 100;  // 最大アップロード件数を指定
+
+        // ファイル選択時の処理
+        fileInput.addEventListener('change', function(event) {
+            const files = Array.from(event.target.files);
+            alertBox.classList.add('d-none');  // アラートを非表示
+            successBox.classList.add('d-none'); // 成功メッセージを非表示
+
+            for (let file of files) {
+                // 重複チェック
+                if (selectedFiles.some(f => f.name === file.name && f.size === file.size && f.lastModified === file.lastModified)) {
+                    continue;  // 重複している場合は追加しない
+                }
+
+                if (selectedFiles.length >= maxFiles) {
+                    alertBox.textContent = `ファイルの最大アップロード件数は${maxFiles}件です。`;
+                    alertBox.classList.remove('d-none');  // アラートを表示
+                    break;
+                }
+
+                selectedFiles.push(file);
+            }
+
+            updateFileList();
+            fileInput.value = '';  // ファイル入力をリセット
+        });
+
+        // ファイルリストの更新
+        function updateFileList() {
+            fileListTable.innerHTML = "";  // 既存のリストをクリア
+
+            selectedFiles.forEach((file, index) => {
+                const row = fileListTable.insertRow();
+                
+                const cellName = row.insertCell(0);
+                const cellSize = row.insertCell(1);
+                const cellAction = row.insertCell(2);
+
+                cellName.textContent = file.name;
+                cellSize.textContent = (file.size / (1024 * 1024)).toFixed(2);
+
+                // 削除ボタンの追加
+                const removeBtn = document.createElement('button');
+                removeBtn.className = 'btn btn-sm btn-danger';
+                removeBtn.textContent = '削除';
+                removeBtn.addEventListener('click', function() {
+                    removeFile(index);
+                });
+                cellAction.appendChild(removeBtn);
+            });
+        }
+
+        // ファイルの削除
+        function removeFile(index) {
+            selectedFiles.splice(index, 1);
+            updateFileList();
+            alertBox.classList.add('d-none');  // アラートを非表示
+            successBox.classList.add('d-none'); // 成功メッセージを非表示
+        }
+
+        // フォーム送信時の処理
+        uploadForm.addEventListener('submit', function(event) {
+            event.preventDefault();  // デフォルトのフォーム送信を防止
+            // 画面を#progressContainerに移動
+            progressContainer.scrollIntoView({ behavior: 'smooth' });
+            // フォーム送信時に確認ダイアログを表示しない
+            isSubmitting = true;
+            if (selectedFiles.length === 0) {
+                alertBox.textContent = 'アップロードするファイルを選択してください。';
+                alertBox.classList.remove('d-none');
+                return;
+            }
+
+            const formData = new FormData();
+            selectedFiles.forEach((file, index) => {
+                formData.append('upload_files', file);
+            });
+
+            // カテゴリーを追加
+            const category = document.getElementById('category').value;
+            formData.append('category', category);
+
+            // タグを追加
+            const tags = document.getElementById('tags').value;
+            formData.append('tags', tags);
+
+            // 公開フラグを追加
+            const published = document.getElementById('published').checked ? '1' : '0';
+            formData.append('published', published);
+
+            // CSRFトークンを追加
+            const csrfToken = document.querySelector('[name=csrfmiddlewaretoken]').value;
+            formData.append('csrfmiddlewaretoken', csrfToken);
+
+            // XMLHttpRequestを使用してアップロード
+            const xhr = new XMLHttpRequest();
+            xhr.open('POST', "{% url 'uploads_ajax' %}", true);
+            xhr.setRequestHeader('X-Requested-With', 'XMLHttpRequest');
+
+            // 進捗イベントのハンドリング
+            xhr.upload.addEventListener('progress', function(e) {
+                if (e.lengthComputable) {
+                    const percentComplete = Math.round((e.loaded / e.total) * 100);
+                    progressBar.style.width = percentComplete + '%';
+                    progressBar.textContent = percentComplete + '%';
+
+                    const uploadedMB = (e.loaded / (1024 * 1024)).toFixed(2);
+                    const totalMB = (e.total / (1024 * 1024)).toFixed(2);
+                    progressText.textContent = `アップロード中: ${uploadedMB}MB / ${totalMB}MB`;
+
+                    // アップロード速度の計算（オプション）
+                    // 例: const uploadSpeed = (e.loaded / ((new Date()) - startTime)) * 1000; // bytes per second
+                }
+            });
+
+            let startTime;
+            xhr.onloadstart = function() {
+                startTime = new Date();
+                progressContainer.classList.remove('d-none');
+                progressBar.style.width = '0%';
+                progressBar.textContent = '0%';
+                progressText.textContent = 'アップロードを開始しました...';
+            };
+
+            xhr.onload = function() {
+                if (xhr.status === 200) {
+                    const data = JSON.parse(xhr.responseText);
+                    if (data.success) {
+                        successBox.textContent = 'ファイルのアップロードに成功しました。';
+                        successBox.classList.remove('d-none');
+                        selectedFiles = [];
+                        updateFileList();
+                        progressContainer.classList.add('d-none');
+                    } else {
+                        alertBox.textContent = data.error || 'アップロードに失敗しました。';
+                        alertBox.classList.remove('d-none');
+                        progressContainer.classList.add('d-none');
+                    }
+                } else {
+                    alertBox.textContent = 'アップロード中にエラーが発生しました。';
+                    alertBox.classList.remove('d-none');
+                    progressContainer.classList.add('d-none');
+                }
+                isSubmitting = false;
+            };
+
+            xhr.onerror = function() {
+                alertBox.textContent = 'アップロード中にエラーが発生しました。';
+                alertBox.classList.remove('d-none');
+                progressContainer.classList.add('d-none');
+            };
+
+            xhr.send(formData);
+        });
+    });
+</script>
+{% endblock %}

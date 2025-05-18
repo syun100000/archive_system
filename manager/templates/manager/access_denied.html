@@ -1,0 +1,15 @@
+<p>あなたはこのページにアクセスする権限がありません。</p>
+<p>アクセス権限のあるアカウントでログインしてください。</p>
+<p id="sec"></p><span>秒後にトップページにリダイレクトします。</span>
+
+<script>
+    var sec = 10;
+    var timer = setInterval(function(){
+        document.getElementById('sec').innerHTML = sec;
+        sec--;
+        if (sec == -1) {
+            clearInterval(timer);
+            location.href = "{% url 'index' %}";
+        }
+    }, 1000);
+</script>

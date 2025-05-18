@@ -1,0 +1,152 @@
+{% extends 'manager/manager_base.html' %}
+{% load static %}
+{% block head %}
+<style>
+    .custom-h1 {
+        margin-bottom: 1rem; /* 必要に応じて値を調整 */
+    }
+    .custom-p {
+        margin-bottom: 1rem; /* 必要に応じて値を調整 */
+    }
+    .custom-h2 {
+        margin-top: 1rem; /* 必要に応じて値を調整 */
+    }
+</style>
+{% endblock %}
+{% block head_title %} システム設定 {% endblock %}
+{% block manager_content %}
+        <h1 class="mb-4 custom-h1">システム設定</h1>
+        {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+        {% endif %}
+        <p class="mb-3 custom-p">このページでは、システムの設定を変更できます。</p>
+        <form method="post">
+            {% csrf_token %}
+            <h2 class="mt-3 custom-h2">ロケーション設定</h2>
+            <div class="form-group">
+                <label for="site_title">サイトタイトル</label>
+                <input type="text" class="form-control" name="site_title" id="site_title" value="{{ site_title }}">
+            </div>
+            <div class="form-group">
+                <label for="location_name">ロケーション名</label>
+                <input type="text" class="form-control" name="location_name" id="location_name" value="{{ location_name }}">
+            </div>
+            <div class="form-group">
+                <label for="location_address">住所</label>
+                <input type="text" class="form-control" name="location_address" id="location_address" value="{{ location_address }}">
+            </div>
+            <div class="form-group">
+                <label for="location_tel">電話番号</label>
+                <input type="text" class="form-control" name="location_tel" id="location_tel" value="{{ location_tel }}">
+            </div>
+            <div class="form-group">
+                <label for="location_web">公式ウェブサイト(フッターで使用するもの)</label>
+                <input type="url" class="form-control" name="location_web" id="location_web" value="{{ location_web }}">
+            </div>
+            <h2 class="mt-5">トップページ設定</h2>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" name="show_recommend" id="show_recommend" {% if top_page.show_recommend %}checked{% endif %}>
+                <label class="form-check-label" for="show_recommend">おすすめ記事を表示する</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" name="show_recent" id="show_recent" {% if top_page.show_recent %}checked{% endif %}>
+                <label class="form-check-label" for="show_recent">新着記事を表示する</label>
+            </div>
+            <h2 class="mt-5">aboutページ設定</h2>
+            <div class="form-group">
+                <label for="about_title">タイトル</label>
+                <input type="text" class="form-control" name="about_title" id="about_title" value="{{ about_page.title }}">
+            </div>
+            <div class="form-group">
+                <label for="about_content">ページコンテンツ</label>
+                <textarea class="form-control" name="about_content" id="editor" rows="10">{{ about_page.content }}</textarea>
+            </div>
+            <h2 class="mt-5">スタッフ権限設定</h2>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" name="can_edit_report" id="can_edit_report" {% if staff_authority.can_edit_report %}checked{% endif %}>
+                <label class="form-check-label" for="can_edit_report">記事を編集できる</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" name="can_edit_upload" id="can_edit_upload" {% if staff_authority.can_edit_upload %}checked{% endif %}>
+                <label class="form-check-label" for="can_edit_upload">アーカイブコンテンツを編集できる</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" name="can_edit_announcement" id="can_edit_announcement" {% if staff_authority.can_edit_announcement %}checked{% endif %}>
+                <label class="form-check-label" for="can_edit_announcement">お知らせを編集できる</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" name="can_edit_tag" id="can_edit_tag" {% if staff_authority.can_edit_tag %}checked{% endif %}>
+                <label class="form-check-label" for="can_edit_tag">タグを編集できる</label>
+            </div>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" name="can_edit_category" id="can_edit_category" {% if staff_authority.can_edit_category %}checked{% endif %}>
+                <label class="form-check-label" for="can_edit_category">カテゴリーを編集できる</label>
+            </div>
+            <!-- AI設定セクションの追加 -->
+            <h2 class="mt-5">AI設定</h2>
+            <div class="form-check">
+                <input type="checkbox" class="form-check-input" name="ai_enabled" id="ai_enabled" {% if AI.enabled %}checked{% endif %}>
+                <label class="form-check-label" for="ai_enabled">AI機能を有効化する</label>
+            </div>
+            <div class="form-group mt-3">
+                <label for="ai_model">AIモデル</label>
+                <select class="form-control" name="ai_model" id="ai_model">
+                    <option value="gpt" {% if AI.model == 'gpt' %}selected{% endif %}>GPT</option>
+                    <option value="ollama" {% if AI.model == 'ollama' %}selected{% endif %}>OLLAMA</option>
+                </select>
+            </div>
+            <div id="gpt_settings" style="display: {% if AI.model == 'gpt' %}block{% else %}none{% endif %};">
+                <h3 class="mt-3">GPT設定</h3>
+                <div class="form-group">
+                    <label for="gpt_model_name">モデル名</label>
+                    <input type="text" class="form-control" name="gpt_model_name" id="gpt_model_name" value="{{ AI.gpt.model_name }}">
+                </div>
+                <div class="form-group">
+                    <label for="gpt_url">API URL</label>
+                    <input type="url" class="form-control" name="gpt_url" id="gpt_url" value="{{ AI.gpt.url }}">
+                </div>
+                <div class="form-group">
+                    <label for="gpt_api_key">APIキー</label>
+                    <input type="text" class="form-control" name="gpt_api_key" id="gpt_api_key" value="{{ AI.gpt.api_key }}">
+                </div>
+                <div class="form-group">
+                    <label for="gpt_max_tokens">最大トークン数</label>
+                    <input type="number" class="form-control" name="gpt_max_tokens" id="gpt_max_tokens" value="{{ AI.gpt.max_tokens }}">
+                </div>
+            </div>
+            <div id="ollama_settings" style="display: {% if AI.model == 'ollama' %}block{% else %}none{% endif %};">
+                <h3 class="mt-3">OLLAMA設定</h3>
+                <div class="form-group">
+                    <label for="ollama_model_name">モデル名</label>
+                    <select class="form-control" name="ollama_model_name" id="ollama_model_name">
+                        <!-- ollama_modelsリストの各モデルに対してループを実行 -->
+                        {% for model in ollama_models %}
+                            <!-- モデル名をオプションとして追加し、選択されているモデルにはselected属性を追加 -->
+                            <option value="{{ model }}" {% if AI.ollama.model_name == model %}selected{% endif %}>{{ model }}</option>
+                        {% endfor %}
+                    </select>
+                    <!-- 注意書きを追加 -->
+                    <small class="form-text text-muted">画像読み込み対応のモデルを選択してください。</small>
+                </div>
+                <div class="form-group">
+                    <label for="ollama_url">API URL</label>
+                    <input type="url" class="form-control" name="ollama_url" id="ollama_url" value="{{ AI.ollama.url }}">
+                </div>
+            </div>
+            <button type="submit" class="btn btn-primary mt-3">保存</button>
+        </form>
+        <script type="importmap">
+            {
+                "imports": {
+                    "ckeditor5": "/static/ckeditor5/ckeditor5.js",
+                    "ckeditor5/": "/static/ckeditor5/"
+                }
+            }
+        </script>
+        <script src="{% static 'manager/js/write_report.js' %}" type="module"></script>
+{% endblock %}

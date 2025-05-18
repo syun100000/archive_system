@@ -1,0 +1,112 @@
+{% extends 'manager/manager_base.html' %}
+{% load static %}
+{% block head %}
+<link href="{% static 'manager/css/tagsinput.css' %}" rel="stylesheet" type="text/css">
+<script src="{% static 'manager/js/tagsinput.js' %}"></script>
+{% endblock %}
+{% block head_title %} かんたん投稿 {% endblock %}
+{% block manager_content %}
+    <h1>かんたん投稿</h1>
+    
+    <form action="{% url 'easy_write_report' %}" method="POST" tabindex="-1">
+        {% csrf_token %}
+        <div class="form-group">
+            <label for="title">記事タイトル</label>
+            <input type="text" class="form-control" id="title" name="title" placeholder="タイトルを入力してください" value="{{ title }}">
+        </div>
+        <!-- 見出しの部分を一つ追加 -->
+        <div id="headlines">
+            <div class="form-group headline" data-index="1">
+                <label for="Headline1">見出し1</label>
+                <input type="text" class="form-control Headline" id="Headline1" name="Headline1" placeholder="見出し1を入力してください" data-index="1" value="{{ Headline1 }}">
+                <textarea class="form-control Headline_content" id="Headline1_content" name="Headline1_content" rows="3" placeholder="見出し1の内容を入力してください" data-index="1">{{ Headline1_content }}</textarea>
+                <button type="button" class="btn btn-primary file-select-modal-open-btn" data-bs-toggle="modal" data-bs-target="#file_select_modal" data-headline="Headline1" data-index="1">
+                    見出し1にファイルを添付
+                </button>
+                <!-- ファイルパスを含んだJSONを送信するためのinput -->
+                <input type="hidden" id="Headline1_files_1" name="Headline1_files_1" value="{{ Headline1_files_1 }}">
+                <button type="button" class="btn btn-primary add_headline_here" id="add_headline_1" data-index="1">見出し1を追加</button>
+                <button type="button" class="btn btn-danger del_headline" id="del_headline_1" style="display:none;" data-index="1">見出し1を削除</button>
+            </div>
+        </div>
+        <!-- 隠しフィールドで見出しの数を送信 -->
+        <input type="hidden" id="headline_count" name="headline_count" value="1">
+        <!-- selected_files_by_headlineを送信するためのinput -->
+        <input type="hidden" id="selected_files_by_headline" name="selected_files_by_headline" value="{{ selected_files_by_headline }}">
+        <div class="form-group">
+            <label for="is_public">公開ステータス</label>
+            <select class="form-control" id="is_public" name="is_public">
+                <option value="2">下書き(非公開)</option>
+                <option value="1">公開</option>
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="tags">タグ:</label>
+            <input id="tags" name="tags" type="text" data-role="tagsinput" style="display: none;">
+        </div>
+        <!-- Button trigger modal -->
+        <button type="submit" id="form_submit"class="btn btn-primary">投稿する</button>
+        <button type="button" class="btn btn-secondary">一時保存</button>
+    </form>
+        <!-- Modal ファイル検索-->
+        <div class="modal fade" id="file_select_modal" tabindex="-1" aria-labelledby="file_select_modal" aria-hidden="true" data-unique-id="">
+            <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                <h5 class="modal-title" id="fileModalLabel"></h5>
+                <!-- 現在表示中のモーダルがどのみだしのものか示しておくためのdiv -->
+                <div id="current_headline" style="display:none;" data-headline=""></div>
+                <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                <!-- ここにサーバーから取得した画像を表示する -->
+                <div class="col-md-6">
+                    <form method="" action="" class="search-form" onsubmit="event.preventDefault(); search_img(event); return false;">{% csrf_token %}
+                        <div class="input-group file_type mb-3">
+                            <label for="file_type">ファイルタイプ</label>
+                            <select class="form-control" id="file_type" name="file_type">
+                                <option value="image">画像</option>
+                                <option value="video">動画</option>
+                                <option value="youtube">YouTube</option>
+                                <option value="audio">音声</option>
+                                <option value="pdf">PDF</option>
+                            </select>
+                        </div>
+                        <div class="input-group mb-3">
+                            <input class="form-control" type="text" placeholder="検索" aria-label="キーワードを入力" name="keyword" id="id_keyword" maxlength="100">
+                            <div class="input-group-append">
+                                <button type="submit" class="btn btn-primary" onclick="search_file(event)">検索</button>    
+                            </div>
+                        </div>
+                    </form>
+                </div>
+                <h6>検索結果</h6>
+                <div id="file-list" class="d-flex flex-wrap">
+                </div>
+                <h6>選択したファイル</h6>
+                <!-- 選択したファイルを表示する -->
+                <div id="selected-file-list" class="d-flex flex-wrap">
+                    <table class="table table-striped">
+                        <thead>
+                            <tr>
+                                <th scope="col">ID</th>
+                                <th scope="col">ファイル名</th>
+                                <th scope="col">ファイルタイプ</th>
+                                <th scope="col">操作</th>
+                            </tr>
+                        </thead>
+                        <tbody id="selected-file-list-body">
+                        </tbody>
+                    </table>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+                    <button type="button" class="btn btn-primary" id="select-file-btn"data-bs-dismiss="modal">OK</button>
+                </div>
+            </div>
+            </div>
+        </div>
+    <!-- static JS用URL -->
+    <div id="search_file_url" data-url ="{% url 'search_file' %}"></div>
+    <script src="{% static 'manager/js/easy_write_report.js' %}"></script>
+{% endblock %}

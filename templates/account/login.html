@@ -1,0 +1,49 @@
+{% extends "ArchiveViewer/base.html" %}
+{% block head_title %}ログイン{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">ログイン</div>
+                <div class="card-body">
+                    <form method="post">
+                        {% csrf_token %}
+                        {% if form.non_field_errors %}
+                            <div class="alert alert-danger">
+                                {{ form.non_field_errors }}
+                            </div>
+                        {% endif %}
+                        <p>
+                            <label for="id_login">メールアドレス:</label>
+                            {% if form.login.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.login.errors }}
+                                </div>
+                            {% endif %}
+                            <input type="email" name="login" placeholder="メールアドレス" autocomplete="email" maxlength="320" required="" id="id_login" control-id="ControlID-2">
+                        </p>
+                        <p>
+                            <label for="id_password">パスワード:</label>
+                            {% if form.password.errors %}
+                                <div class="alert alert-danger">
+                                    {{ form.password.errors }}
+                                </div>
+                            {% endif %}
+                            <input type="password" name="password" placeholder="パスワード" autocomplete="current-password" required="" id="id_password" control-id="ControlID-3">
+                        </p>
+                        <p>
+                            <label for="id_remember">ログインしたままにする:</label>
+                            <input type="checkbox" name="remember" id="id_remember" control-id="ControlID-4">
+                        </p>
+                        <button type="submit" class="btn btn-primary" control-id="ControlID-5">ログイン</button>
+                    </form>
+                    <p class="mt-3">パスワードを忘れた方は<a href="{% url 'account_reset_password' %}">こちら</a></p>
+                    <p class="mt-3">アカウントをお持ちでない方は<a href="{% url 'account_signup' %}">こちら</a></p>
+                </div>
+            </div>
+            <a class="mt-3" href="{% url 'index' %}">ホームに戻る</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

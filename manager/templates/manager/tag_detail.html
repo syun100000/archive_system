@@ -1,0 +1,107 @@
+{% extends 'manager/manager_base.html' %}
+{% load static %}
+{% block head_title %} タグ詳細: {{ tag.name }} {% endblock %}
+{% block manager_content %}
+    <h1>タグ詳細: {{ tag.name }}</h1>
+    
+    <p>タグの説明: {{ tag.description }}</p>
+    
+    <h2>関連するレポート</h2>
+    {% if reports %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>タイトル</th>
+                    <th>作成日</th>
+                    <th>公開ステータス</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for report in reports %}
+                <tr>
+                    <td><a href="{% url 'report_contents_detail' report.id %}">{{ report.title }}</a></td>
+                    <td>{{ report.created_at }}</td>
+                    <td>{{ report.is_public|yesno:"公開,非公開" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <span class="step-links">
+                {% if reports.has_previous %}
+                    <a href="?report_page=1">&laquo; 最初</a>
+                    <a href="?report_page={{ reports.previous_page_number }}">前へ</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ reports.number }} of {{ reports.paginator.num_pages }}.
+                </span>
+
+                {% if reports.has_next %}
+                    <a href="?report_page={{ reports.next_page_number }}">次へ</a>
+                    <a href="?report_page={{ reports.paginator.num_pages }}">最後 &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+    {% else %}
+        <p>関連するレポートはありません。</p>
+    {% endif %}
+    
+    <h2>関連するアップロードコンテンツ</h2>
+    {% if uploads %}
+        <table class="table">
+            <thead>
+                <tr>
+                    <th>タイトル</th>
+                    <th>ファイル名</th>
+                    <th>公開ステータス</th>
+                </tr>
+            </thead>
+            <tbody>
+                {% for upload in uploads %}
+                <tr>
+                    <td><a href="{% url 'upload_contents_detail' upload.file_id %}">{{ upload.title }}</a></td>
+                    <td>{{ upload.file_name }}</td>
+                    <td>{{ upload.published|yesno:"公開,非公開" }}</td>
+                </tr>
+                {% endfor %}
+            </tbody>
+        </table>
+
+        <div class="pagination">
+            <span class="step-links">
+                {% if uploads.has_previous %}
+                    <a href="?upload_page=1">&laquo; 最初</a>
+                    <a href="?upload_page={{ uploads.previous_page_number }}">前へ</a>
+                {% endif %}
+
+                <span class="current">
+                    Page {{ uploads.number }} of {{ uploads.paginator.num_pages }}.
+                </span>
+
+                {% if uploads.has_next %}
+                    <a href="?upload_page={{ uploads.next_page_number }}">次へ</a>
+                    <a href="?upload_page={{ uploads.paginator.num_pages }}">最後 &raquo;</a>
+                {% endif %}
+            </span>
+        </div>
+    {% else %}
+        <p>関連するアップロードコンテンツはありません。</p>
+    {% endif %}
+
+    <!-- タグの削除 -->
+    {% if user.is_superuser %}
+    <script>
+        function confirmDelete() {
+            return confirm("このタグを削除してもよろしいですか？");
+        }
+    </script>
+    <form action="{% url 'tag_detail' tag.name %}" method="POST" onsubmit="return confirmDelete()">
+        {% csrf_token %}
+        <input type="hidden" name="action" value='delete'>
+        <button type="submit" class="btn btn-danger">このタグを削除</button>
+    </form>
+    {% endif %}
+    <a href="{% url 'tags' %}" class="btn btn-secondary">タグ一覧に戻る</a>
+{% endblock %}

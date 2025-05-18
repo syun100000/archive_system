@@ -1,0 +1,17 @@
+{% extends "ArchiveViewer/base.html" %}
+{% block head_title %}アカウントが無効です{% endblock %}
+{% block content %}
+<div class="container mt-5">
+    <div class="row justify-content-center">
+        <div class="col-md-6">
+            <div class="card">
+                <div class="card-header">アカウントが無効です</div>
+                <div class="card-body">
+                    <p>このアカウントは無効です。詳細については管理者にお問い合わせください。</p>
+                </div>
+            </div>
+            <a class="mt-3" href="{% url 'index' %}">ホームに戻る</a>
+        </div>
+    </div>
+</div>
+{% endblock %}

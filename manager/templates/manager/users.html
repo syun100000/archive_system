@@ -1,0 +1,222 @@
+
+{% extends 'manager/manager_base.html' %}
+{% load static %}
+{% block head_title %} ユーザー一覧 {% endblock %}
+{% block manager_content %}
+<h1>ユーザー一覧</h1>
+
+<div class="alert alert-info" role="alert">
+  <p><a href="{% url 'admin:index' %}" class="alert-link">Django管理サイト</a>にアクセスして、さらに詳細な管理を行うことができます。</p>
+</div>
+{% if messages %}
+{% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+{% endfor %}
+{% endif %}
+<!-- ユーザー追加ボタン -->
+<button type="button" class="btn btn-success mb-3" data-bs-toggle="modal" data-bs-target="#addUserModal">
+  ユーザー追加
+</button>
+
+<!-- ユーザーテーブル -->
+<table class="table table-striped">
+    <thead>
+        <tr>
+            <th scope="col">ユーザー名</th>
+            <th scope="col">メールアドレス</th>
+            <th scope="col">スタッフ</th>
+            <th scope="col">管理者</th>
+        </tr>
+    </thead>
+    <tbody id="user-table-body">
+        {% for user in users %}
+        <tr>
+            <td>{{ user.last_name }} {{ user.first_name }}</td>
+            <td>{{ user.email }}</td>
+            <td>{{ user.is_staff|yesno:"⚪︎," }}</td>
+            <td>{{ user.is_superuser|yesno:"⚪︎," }}</td>
+        </tr>
+        {% endfor %}
+    </tbody>
+</table>
+
+<!-- ページネーション -->
+<div class="pagination">
+    <span class="step-links">
+        {% if users.has_previous %}
+            <a href="?page=1">&laquo; 最初</a>
+            <a href="?page={{ users.previous_page_number }}">前へ</a>
+        {% endif %}
+
+        <span class="current">
+            Page {{ users.number }} of {{ users.paginator.num_pages }}.
+        </span>
+
+        {% if users.has_next %}
+            <a href="?page={{ users.next_page_number }}">次へ</a>
+            <a href="?page={{ users.paginator.num_pages }}">最後 &raquo;</a>
+        {% endif %}
+    </span>
+</div>
+
+<!-- ユーザー追加用モーダル -->
+<div class="modal fade" id="addUserModal" tabindex="-1" aria-labelledby="addUserModalLabel" aria-hidden="true">
+  <div class="modal-dialog">
+    <div class="modal-content">
+      <form id="add-user-form">
+        <div class="modal-header">
+          <h5 class="modal-title" id="addUserModalLabel">ユーザー追加</h5>
+          <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="閉じる"></button>
+        </div>
+        <div class="modal-body">
+          {% csrf_token %}
+          <div class="mb-3">
+            <label for="id_email" class="form-label">メールアドレス</label>
+            <input type="email" class="form-control" id="id_email" name="email" required>
+          </div>
+          <div class="mb-3">
+            <label for="id_last_name" class="form-label">姓</label>
+            <input type="text" class="form-control" id="id_last_name" name="last_name" required>
+          </div>
+          <div class="mb-3">
+            <label for="id_first_name" class="form-label">名</label>
+            <input type="text" class="form-control" id="id_first_name" name="first_name" required>
+          </div>
+          <div class="mb-3">
+            <label for="id_password" class="form-label">パスワード</label>
+            <input type="password" class="form-control" id="id_password" name="password" required>
+          </div>
+          <div class="mb-3">
+            <label for="id_password_confirm" class="form-label">パスワード確認</label>
+            <input type="password" class="form-control" id="id_password_confirm" name="password_confirm" required>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="id_is_staff" name="is_staff">
+            <label class="form-check-label" for="id_is_staff">
+              スタッフ
+            </label>
+          </div>
+          <div class="form-check mb-3">
+            <input class="form-check-input" type="checkbox" id="id_is_superuser" name="is_superuser">
+            <label class="form-check-label" for="id_is_superuser">
+              管理者
+            </label>
+          </div>
+          <div id="form-errors" class="text-danger"></div>
+        </div>
+        <div class="modal-footer">
+          <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">閉じる</button>
+          <button type="submit" class="btn btn-primary">追加</button>
+        </div>
+      </form>
+    </div>
+  </div>
+</div>
+
+<!-- jQueryとBootstrapのJSを読み込む -->
+<script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+<script src="{% static 'bootstrap/js/bootstrap.bundle.min.js' %}"></script>
+
+<!-- JavaScript for handling AJAX submission -->
+<script>
+  // CSRFトークンを取得する関数
+  function getCookie(name) {
+      let cookieValue = null;
+      if (document.cookie && document.cookie !== '') {
+          const cookies = document.cookie.split(';');
+          for (let i = 0; i < cookies.length; i++) {
+              const cookie = cookies[i].trim();
+              // 先頭が指定した名前の場合
+              if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                  cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                  break;
+              }
+          }
+      }
+      return cookieValue;
+  }
+  const csrftoken = getCookie('csrftoken');
+
+  // AJAX設定にCSRFトークンを追加
+  $.ajaxSetup({
+      beforeSend: function(xhr, settings) {
+          if (!(/^http:.*/.test(settings.url) || /^https:.*/.test(settings.url))) {
+              // 同一オリジンの場合のみヘッダーにCSRFトークンを追加
+              xhr.setRequestHeader("X-CSRFToken", csrftoken);
+          }
+      }
+  });
+
+  $(document).ready(function(){
+    $('#add-user-form').on('submit', function(event){
+      event.preventDefault();
+      var form = $(this);
+      var url = "{% url 'add_user' %}";
+      var data = form.serialize();
+
+      $.ajax({
+        url: url,
+        type: 'POST',
+        data: data,
+        success: function(response){
+          if(response.success){
+            // モーダルを閉じる
+            $('#addUserModal').modal('hide');
+            // フォームをリセット
+            form[0].reset();
+            // エラーメッセージをクリア
+            $('#form-errors').html('');
+            // ブラウザポップアップを表示
+            alert(response.message);
+            // ページをリロード
+            location.reload();
+          }
+          else if(response.errors){
+            var errorHtml = '';
+            if(typeof response.errors === 'string'){
+                // 'error' が文字列の場合（旧形式）
+                errorHtml = '<ul><li>' + response.errors + '</li></ul>';
+            } else {
+                // 'errors' オブジェクトからエラーメッセージを生成
+                errorHtml = '<ul>';
+                for(var field in response.errors){
+                  for(var i=0; i < response.errors[field].length; i++){
+                    errorHtml += '<li>' + response.errors[field][i].message + '</li>';
+                  }
+                }
+                errorHtml += '</ul>';
+            }
+            $('#form-errors').html(errorHtml);
+          }
+        },
+        error: function(xhr){
+          if(xhr.status === 400){
+            var response = JSON.parse(xhr.responseText);
+            var errorHtml = '';
+            if(response.errors){
+              errorHtml = '<ul>';
+              for(var field in response.errors){
+                for(var i=0; i < response.errors[field].length; i++){
+                  errorHtml += '<li>' + response.errors[field][i].message + '</li>';
+                }
+              }
+              errorHtml += '</ul>';
+            } else if(response.error){
+              errorHtml = '<ul><li>' + response.error + '</li></ul>';
+            } else {
+              errorHtml = '<ul><li>不明なエラーが発生しました。</li></ul>';
+            }
+            $('#form-errors').html(errorHtml);
+          } else {
+            $('#form-errors').html('<ul><li>予期せぬエラーが発生しました。</li></ul>');
+          }
+        }
+      });
+    });
+  });
+</script>
+
+{% endblock manager_content %}

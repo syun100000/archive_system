@@ -1,0 +1,126 @@
+{% extends 'manager/manager_base.html' %}
+{% block head_title %} カテゴリー一覧 {% endblock %}
+{% block manager_content %}
+    <h1>カテゴリー一覧</h1>
+    <a href="{% url 'category_create' %}" class="btn btn-primary">カテゴリー追加</a>
+    {% if messages %}
+    {% for message in messages %}
+        <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+            {{ message }}
+            <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+        </div>
+    {% endfor %}
+    {% endif %}
+    <form method="get" action="{% url 'category_list' %}">
+        <div class="form-group">
+            <label for="name">カテゴリー名</label>
+            <input type="text" name="name" id="name" class="form-control" value="{{ request.GET.name }}">
+        </div>
+        <div class="form-group">
+            <label for="parent">親カテゴリー</label>
+            <select name="parent" id="parent" class="form-control">
+                <option value="all" {% if request.GET.parent == "all" %}selected{% endif %}>すべて</option>
+                <option value="none" {% if request.GET.parent == "none" %}selected{% endif %}>なし</option>
+                {% for id, name in all_categories %}
+                    <option value="{{ id }}" {% if request.GET.parent|stringformat:"s" == id|stringformat:"s" %}selected{% endif %}>
+                        {{ name }}
+                    </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="form-group">
+            <label for="is_active">有効フラグ</label>
+            <select name="is_active" id="is_active" class="form-control">
+                <option value="">すべて</option>
+                <option value="1" {% if request.GET.is_active == "1" %}selected{% endif %}>有効</option>
+                <option value="0" {% if request.GET.is_active == "0" %}selected{% endif %}>無効</option>
+            </select>
+        </div>
+        <button type="submit" class="btn btn-primary">検索</button>
+    </form>
+    <h2>既存のカテゴリー</h2>
+    <p>検索結果: {{ categories.paginator.count }} 件</p>
+    <table class="table">
+        <thead>
+            <tr>
+                <th>カテゴリー名</th>
+                <th>親カテゴリー</th>
+                <th>説明</th>
+                <th>有効フラグ</th>
+                <th>操作</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for category in categories %}
+            <tr>
+                <td>{{ category.name }}</td>
+                <td>
+                    {% if category.parent %}
+                        {{ category.parent.name }}
+                    {% else %}
+                        なし
+                    {% endif %}
+                </td>
+                <td>{{ category.description }}</td>
+                <td>{{ category.is_active|yesno:"有効,無効" }}</td>
+                <td>
+                    <a href="{% url 'category_edit' category.id %}" class="btn btn-secondary">編集</a>
+                    <form action="{% url 'category_delete' category.id %}" method="post" style="display:inline;">
+                        {% csrf_token %}
+                        <button type="submit" class="btn btn-danger" onclick="return confirm('本当にこのカテゴリーを削除しますか？');">削除</button>
+                    </form>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <!-- ページネーションナビゲーションを追加 -->
+    <div class="pagination-container">
+        <nav aria-label="Page navigation">
+            <ul class="pagination justify-content-center">
+                {% if categories.has_previous %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page=1&name={{ request.GET.name }}&parent={{ request.GET.parent }}&is_active={{ request.GET.is_active }}" aria-label="First">
+                            &laquo; 最初
+                        </a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ categories.previous_page_number }}&name={{ request.GET.name }}&parent={{ request.GET.parent }}&is_active={{ request.GET.is_active }}" aria-label="Previous">
+                            前
+                        </a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="First">&laquo; 最初</a>
+                    </li>
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Previous">前</a>
+                    </li>
+                {% endif %}
+
+                <li class="page-item disabled">
+                    <a class="page-link" href="#">
+                        ページ {{ categories.number }} of {{ categories.paginator.num_pages }}
+                    </a>
+                </li>
+
+                {% if categories.has_next %}
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ categories.next_page_number }}&name={{ request.GET.name }}&parent={{ request.GET.parent }}&is_active={{ request.GET.is_active }}" aria-label="Next">次</a>
+                    </li>
+                    <li class="page-item">
+                        <a class="page-link" href="?page={{ categories.paginator.num_pages }}&name={{ request.GET.name }}&parent={{ request.GET.parent }}&is_active={{ request.GET.is_active }}" aria-label="Last">最後 &raquo;</a>
+                    </li>
+                {% else %}
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Next">次</a>
+                    </li>
+                    <li class="page-item disabled">
+                        <a class="page-link" href="#" aria-label="Last">最後 &raquo;</a>
+                    </li>
+                {% endif %}
+            </ul>
+        </nav>
+    </div>
+{% endblock %}

@@ -1,0 +1,75 @@
+{% extends 'ArchiveViewer/base.html' %}
+{% block head_title %} {{ report_contents.title }} {% endblock %}
+{% block content %}
+{% if report_contents.is_public == 0 %}
+<div class="alert alert-warning" role="alert">
+    <p>この記事は非公開に設定されています！</p>
+</div>
+{% endif %}
+{% if messages %}
+{% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+{% endfor %}
+{% endif %}
+<div class="row" style="margin-bottom: 10px;">
+    <div class="col-auto">
+        {% if user.is_authenticated %}
+        {% if is_favorite == 0 %}
+        <form action="{% url 'report_favorite_add' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="report_id" value="{{report_contents.id}}">
+            <button type="submit" class="btn btn-primary">お気に入りに追加</button>
+        </form>
+        {% elif is_favorite == 1 %}
+        <form action="{% url 'report_favorite_delete' %}" method="post">
+            {% csrf_token %}
+            <input type="hidden" name="report_id" value="{{report_contents.id}}">
+            <button type="submit" class="btn btn-secondary">お気に入りから削除</button>
+        </form>
+        {% endif %}
+        {% endif %}
+    </div>
+    {% if user.is_authenticated %}
+    {% if user.is_superuser or can_edit_report %}
+    <div class="col-auto">
+        <a href="{% url 'report_edit' report_contents.id %}" class="btn btn-primary">編集</a>
+    </div>
+    {% endif %}
+    {% endif %}
+</div>
+<div class="container mt-5">
+    <h1>{{ report_contents.title }}</h1>
+
+    <!-- <p class="text-muted">作成日: {{ report_contents.created_at }}</p> -->
+    <p class="text-muted">更新日: {{ report_contents.updated_at }}</p>
+    <p class="text-muted">作成者: {{ report_contents.created_by.last_name }}</p>
+    
+    <hr>
+    <div class="content">
+        {{ report_contents.description|safe }}
+    </div>
+</div>
+{% if related_reports %}
+<!-- 関連記事を表示するセクション -->
+<div class="container mt-5">
+    <h3>関連する記事</h3>
+    <div class="row">
+        {% for related_report in related_reports %}
+        <div class="col-md-4">
+            <div class="card mb-4 box-shadow">
+                <div class="card-body">
+                    <h4 class="card-title">{{ related_report.title }}</h4>
+                    <p class="card-text">{{ related_report.description|truncatechars:100|striptags }}</p>
+                    <a href="{% url 'report_contents_detail' related_report.id %}" class="btn btn-sm btn-outline-secondary">詳細を見る</a>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+</div>
+{% endif %}
+
+{% endblock %}

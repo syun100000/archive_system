@@ -1,0 +1,31 @@
+AI:
+  enabled: true
+  gpt:
+    api_key: API_KEY
+    max_tokens: 300
+    model_name: gpt-4o-mini
+    url: https://api.openai.com/v1/chat/completions
+  model: ollama
+  ollama:
+    model_name: llama3.2-vision:latest
+    url: http://localhost:11434
+about_page:
+  content: ${about_page_content}
+location_address: ${location_address}
+location_name: ${location_name}
+location_tel: ${location_tel}
+location_web: ${location_web}
+ollama_models:
+- llava:13b
+- llama3.2-vision:latest
+- llava:latest
+site_title: ${site_title}
+staff_authority:
+  can_edit_announcement: true
+  can_edit_category: false
+  can_edit_report: true
+  can_edit_tag: false
+  can_edit_upload: true
+top_page:
+  show_recent: false
+  show_recommend: false

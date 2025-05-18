@@ -1,0 +1,88 @@
+{% extends 'ArchiveViewer/base.html' %}
+
+{% block head_title %} ホーム {% endblock %}
+{% block content %}
+    {% if messages %}
+        {% for message in messages %}
+            <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+                {{ message }}
+                <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+            </div>
+        {% endfor %}
+    {% endif %}
+    {% include 'ArchiveViewer/search_bar.html' %}
+    <div class="container">
+        <h2 class="text-center">お知らせ</h2>
+        <ul class="list-group">
+          {% for announcement in announcements %}
+            <li class="list-group-item d-flex justify-content-between align-items-center">
+              <span>{{ announcement.created_at|date:"Y年n月j日" }}</span>
+              <a href="{% url 'announcement_detail' announcement.id %}" class="flex-grow-1 ml-3 text-left" style="padding-left: 2rem;">{{ announcement.title }}</a>
+            </li>
+          {% endfor %}
+        </ul>
+        {% if announcements|length == 0 %}
+            <p class="text-center">現在お知らせはありません。</p>
+        {% endif %}
+      </div>
+    <div class="container mt-8">
+    {% if config.top_page.show_recommend %}
+    <div class="row">
+            <div class="col-md-12">
+                <h2 class="text-center">おすすめ記事</h2>
+            </div>
+        </div>
+        <div class="row">
+            {% for contents in recommend_contents %}
+                <div class="col-md-4">
+                    <div class="card mb-4 box-shadow">
+                        {% if contents.thumbnails.first.path %}
+                            <img class="card-img-top" src="{{ contents.thumbnails.first.path }}" alt="画像">
+                        {% endif %}
+                        <div class="card-body">
+                            <h3 class="card-title">{{ contents.title }}</h3>
+                            {% if contents.description %}
+                            <p class="card-text">{{ contents.description|truncatechars:50 }}</p>
+                            {% endif %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="btn-group">
+                                    <a href="{% url 'report_contents_detail' contents.id %}" class="btn btn-sm btn-outline-secondary">記事を見る</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    {% if config.top_page.show_recent %}
+        <div class="row">
+            <div class="col-md-12">
+                <h2 class="text-center">最近投稿された記事</h2>
+            </div>
+        </div>
+        <div class="row">
+            {% for contents in recent_contents %}
+                <div class="col-md-4">
+                    <div class="card mb-4 box-shadow">
+                        {% if contents.thumbnails.first.path %}
+                            <img class="card-img-top" src="{{ contents.thumbnails.first.path }}" alt="画像">
+                        {% endif %}
+                        <div class="card-body">
+                            <h3 class="card-title">{{ contents.title }}</h3>
+                            {% if contents.description %}
+                                <p class="card-text">{{ contents.description|truncatechars:50 }}</p>
+                            {% endif %}
+                            <div class="d-flex justify-content-between align-items-center">
+                                <div class="btn-group">
+                                    <a href="{% url 'report_contents_detail' contents.id %}" class="btn btn-sm btn-outline-secondary">記事を見る</a>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            {% endfor %}
+        </div>
+    {% endif %}
+    </div>
+{% endblock %}

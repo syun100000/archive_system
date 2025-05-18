@@ -1,0 +1,108 @@
+<h2 style="display: inline-block;">管理ページ</h2>
+<div style="float: right;">
+  {% if user.is_superuser %}
+    <p style="display: inline-block; text-align: right; margin-left: 20px;">管理権限:管理者</p>
+  {% elif user.is_staff %}
+    <p style="display: inline-block; text-align: right; margin-left: 20px;">管理権限:スタッフ</p>
+  {% endif %}
+</div>
+
+  
+<nav class="navbar navbar-expand-lg navbar-light bg-light">
+    <div class="container-fluid">
+      <a class="navbar-brand" href="#">管理ナビゲーション</a>
+      <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNavDropdown" aria-controls="navbarNavDropdown" aria-expanded="false" aria-label="Toggle navigation">
+        <span class="navbar-toggler-icon"></span>
+      </button>
+      <div class="collapse navbar-collapse" id="navbarNavDropdown">
+        <ul class="navbar-nav">
+          <li class="nav-item">
+            <a class="nav-link " aria-current="page" href="{% url 'manager_index' %}">管理トップ</a>
+          </li>
+          {% if user.is_superuser or can_edit_report %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="{% url 'reports' %}" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              記事の投稿
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+              <li><a class="dropdown-item" href="{% url 'write_report' %}">記事の投稿</a></li>
+              <li><a class="dropdown-item" href="{% url 'easy_write_report' %}">簡易投稿</a></li>
+            </ul>
+          </li>
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="{% url 'reports' %}" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              記事一覧
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+              <li><a class="dropdown-item" href="{% url 'reports' %}">記事一覧</a></li>
+              <li><a class="dropdown-item" href="{% url 'reports_dustbox' %}">削除した記事</a></li>
+            </ul>
+          </li> 
+          {% endif %}
+          {% if user.is_superuser or can_edit_announcement %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink2" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              お知らせの管理
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink2">
+              <li><a class="dropdown-item" href="{% url 'announcement_create' %}">お知らせの投稿</a></li>
+              <li><a class="dropdown-item" href="{% url 'announcements' %}">お知らせ一覧</a></li>
+            </ul>
+          </li>
+          {% endif %}
+          {% if user.is_superuser %}
+          <li class="nav-item">
+            <a class="nav-link " href="{% url 'users' %}">ユーザー管理</a>
+          </li>
+          {% endif %}
+          {% if user.is_superuser or can_edit_upload %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="{% url 'reports' %}" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              アーカイブコンテンツ管理
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+              <li><a class="dropdown-item" href="{% url 'upload_list' %}">アーカイブコンテンツ一覧</a></li>
+              <li><a class="dropdown-item" href="{% url 'uploads' %}">アーカイブコンテンツ一括アップロード</a></li>
+              <li><a class="dropdown-item" href="{% url 'upload' %}">アーカイブコンテンツのアップロード</a></li>
+              <li><a class="dropdown-item" href="{% url 'uploads_dustbox' %}">削除したアーカイブコンテンツ</a></li>
+            </ul>
+          </li>
+          {% endif %}
+          {% if user.is_superuser %}
+          <li class="nav-item dropdown"></li>
+            <a class="nav-link " href="{% url 'config_page' %}">システム設定</a>
+            </li>
+            <li class="nav-item">
+            <a class="nav-link " href="{% url 'system_info' %}">システム情報</a>
+            </li>
+          {% endif %}
+          {% if user.is_superuser or can_edit_tag %}
+          <li class="nav-item">
+            <a class="nav-link " href="{% url 'tags' %}">タグ管理</a>
+          </li>
+          {% endif %}
+          {% if user.is_superuser or can_edit_category %}
+          <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="categoryDropdown" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+                カテゴリー管理
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="categoryDropdown">
+                <li><a class="dropdown-item" href="{% url 'category_list' %}">カテゴリー一覧</a></li>
+                <li><a class="dropdown-item" href="{% url 'category_create' %}">カテゴリー追加</a></li>
+            </ul>
+          </li>
+          {% endif %}
+          {% comment %} <li class="nav-item dropdown">
+            <a class="nav-link dropdown-toggle" href="#" id="navbarDropdownMenuLink" role="button" data-bs-toggle="dropdown" aria-expanded="false">
+              Dropdown link
+            </a>
+            <ul class="dropdown-menu" aria-labelledby="navbarDropdownMenuLink">
+              <li><a class="dropdown-item" href="#">Action</a></li>
+              <li><a class="dropdown-item" href="#">Another action</a></li>
+              <li><a class="dropdown-item" href="#">Something else here</a></li>
+            </ul>
+          </li> {% endcomment %}
+        </ul>
+      </div>
+    </div>
+  </nav>

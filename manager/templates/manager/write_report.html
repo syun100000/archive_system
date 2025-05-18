@@ -1,0 +1,134 @@
+{% extends 'manager/manager_base.html' %}
+{% load static %}
+{% block head_title %} {% if edit %}記事の編集{% else %}記事の作成{% endif %} {% endblock %}
+{% block manager_content %}
+<div data-page="{% if edit %}edit{% else %}write{% endif %}"></div>
+<h1 id="title"></h1>
+{% if messages %}
+{% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+{% endfor %}
+{% endif %}
+<form action="{% if edit %}{% url 'report_edit' report.id %}{% else %}{% url 'write_report' %}{% endif %}" method="POST" enctype="multipart/form-data">
+    {% csrf_token %}
+    <div class="form-group">
+        <label for="title">タイトル:</label>
+        {{ form.title }}
+    </div>
+    <div class="form-group">
+        <label for="description">記事の内容:</label>
+        <button type="button" id="insert-content" class="btn btn-primary file-select-modal-open-btn">アーカイブコンテンツを挿入</button>
+        <textarea id="editor" name="description">{{ form.description.value|default_if_none:"" }}</textarea>
+    </div>
+    <div class="form-group">
+        <label for="tags">タグ:</label>
+        {{ form.tags }}
+        <datalist id="tags_list">
+            {% for tag in tags %}
+            <option value="{{ tag.name }}">
+            {% endfor %}
+        </datalist>
+    </div>
+    <hr>
+    <div class="form-group">
+        <label for="categories">カテゴリー:</label>
+        {{ form.categories }}
+    </div>
+    <hr>
+    <div class="form-group">
+        <div class="form-check">
+            {{ form.is_recommend }}
+            <label class="form-check-label" for="is_recommend">おすすめ記事</label>
+        </div>
+        <div class="form-check">
+            {{ form.is_public }}
+            <label class="form-check-label" for="is_public">記事を公開</label>
+        </div>
+    </div>
+    {% if edit %}
+    <input type="hidden" name="report_id" value="{{ report.id }}">
+    {% endif %}
+    <input type="submit" class="btn btn-secondary" value="記事を投稿">
+</form>
+
+
+<script src="{% static 'manager/js/file_select_modal.js' %}"></script>
+<!-- Modal ファイル検索-->
+<div class="modal fade" id="file_select_modal" tabindex="-1" aria-labelledby="file_select_modal" aria-hidden="true" data-unique-id="">
+    <div class="modal-dialog modal-lg">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h5 class="modal-title" id="fileModalLabel"></h5>
+            <!-- トグルボタン追加 -->
+            <div class="form-check form-switch ms-3">
+                <input class="form-check-input" type="checkbox" id="toggle-url-output">
+                <label class="form-check-label" for="toggle-url-output">コンテンツのみ表示</label>
+            </div>
+            <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+        </div>
+        <div class="modal-body">
+        <!-- ここにサーバーから取得した画像を表示する -->
+        <div class="col-md-6">
+            <form method="" action="" class="search-form" onsubmit="event.preventDefault(); search_img(event); return false;">{% csrf_token %}
+                <div class="input-group file_type mb-3">
+                    <label for="file_type">ファイルタイプ</label>
+                    <select class="form-control" id="file_type" name="file_type">
+                        <option value="image">画像</option>
+                        <option value="video">動画</option>
+                        <option value="youtube">YouTube</option>
+                        <option value="audio">音声</option>
+                        <option value="pdf">PDF</option>
+                    </select>
+                </div>
+                <div class="input-group mb-3">
+                    <input class="form-control" type="text" placeholder="キーワード ID" aria-label="キーワードを入力" name="keyword" id="id_keyword" maxlength="100">
+                    <div class="input-group-append">
+                        <button type="submit" class="btn btn-primary" onclick="search_file(event)">検索</button>    
+                    </div>
+                </div>
+            </form>
+        </div>
+        <h6>検索結果</h6>
+        <div id="file-list" class="d-flex flex-wrap">
+        </div>
+        <h6>選択したファイル</h6>
+        <!-- 選択したファイルを表示する -->
+        <div id="selected-file-list" class="d-flex flex-wrap">
+            <table class="table table-striped">
+                <thead>
+                    <tr>
+                        <th>ID</th>
+                        <th>タイトル</th>
+                        <th>ファイル名</th>
+                        <th>詳細</th>
+                        <th>選択</th>
+                    </tr>
+                </thead>
+                <tbody id="selected-file-list-body">
+                </tbody>
+            </table>
+        </div>
+        <div class="modal-footer">
+            <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">キャンセル</button>
+            <button type="button" class="btn btn-primary" id="select-file-btn"data-bs-dismiss="modal">コンテンツを挿入</button>
+        </div>
+    </div>
+    </div>
+</div>
+<div id="search_file_url" data-url ="{% url 'search_file' %}"></div>
+
+
+<script src="{% static 'manager/js/tagsinput.js' %}"></script>
+<script type="importmap">
+    {
+        "imports": {
+            "ckeditor5": "/static/ckeditor5/ckeditor5.js",
+            "ckeditor5/": "/static/ckeditor5/"
+        }
+    }
+</script>
+<script src="{% static 'manager/js/write_report.js' %}" type="module"></script>
+{% endblock %}

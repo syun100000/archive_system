@@ -1,0 +1,197 @@
+{% extends 'manager/manager_base.html' %}
+{% load static %}
+{% block head_title %} お知らせ一覧(管理) {% endblock %}
+{% block manager_content %}
+<h1>お知らせ一覧</h1>
+{% if not user.is_superuser %}
+<div class="alert alert-warning" role="alert">
+    管理者以外は閲覧のみ可能です。
+</div>
+{% endif %}
+{% if messages %}
+{% for message in messages %}
+    <div class="alert alert-{{ message.tags }} alert-dismissible fade show" role="alert">
+        {{ message }}
+        <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+    </div>
+{% endfor %}
+{% endif %}
+<form id="filter-form" method="GET">
+    {% csrf_token %}
+    <div class="row">
+        <div class="col-md-3">
+            <label for="sort">並び替え:</label>
+            <select name="sort" id="sort" class="form-control">
+                <option value="-created_at">作成日時 降順</option>
+                <option value="created_at">作成日時 昇順</option>
+                <option value="-title">タイトル 降順</option>
+                <option value="title">タイトル 昇順</option>
+            </select>
+        </div>
+        <div class="col-md-3">
+            <label for="announcement_id">ID:</label>
+            <input type="number" name="announcement_id" id="announcement_id" value="{{ announcement_id|default_if_none:'' }}" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label for="start_date">開始日:</label>
+            <input type="date" name="start_date" id="start_date" value="{{ start_date }}" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label for="end_date">終了日:</label>
+            <input type="date" name="end_date" id="end_date" value="{{ end_date }}" class="form-control">
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-md-3">
+            <label for="keyword">キーワード:</label>
+            <input type="text" name="keyword" id="keyword" value="{{ keyword|default_if_none:'' }}" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label for="title">タイトル:</label>
+            <input type="text" name="title" id="title" value="{{ title|default_if_none:'' }}" class="form-control">
+        </div>
+        <div class="col-md-3">
+            <label for="include_unpublished">公開状態:</label>
+            <select name="include_unpublished" id="include_unpublished" class="form-control">
+                <option value="all" {% if include_unpublished == 'all' %}selected{% endif %}>すべて</option>
+                <option value="published" {% if include_unpublished == 'published' %}selected{% endif %}>公開のみ</option>
+                <option value="unpublished" {% if include_unpublished == 'unpublished' %}selected{% endif %}>非公開のみ</option>
+            </select>
+        </div>
+    </div>
+    <div class="row mt-3">
+        <div class="col-auto">
+            <button type="submit" class="btn btn-primary">フィルター</button>
+        </div>
+        <div class="col-auto">
+            <a href="{% url 'announcements' %}" class="btn btn-secondary">リセット</a>
+        </div>
+    </div>
+</form>
+<script>
+    // sortとtitleの値を取得し、select要素のselected属性を設定する。
+    const sort = document.getElementById("sort");
+    const sort_value = "{{ sort }}";
+    for (let i = 0; i < sort.options.length; i++) {
+        if (sort.options[i].value == sort_value) {
+            sort.options[i].selected = true;
+        }
+    }
+</script>
+<p>全{{ announcements|length }}件</p>
+{% if announcements %}
+    <table class="table table-bordered mt-3">
+        <thead>
+            <tr>
+                <th>ID</th>
+                <th>タイトル</th>
+                <th>作成日時</th>
+                <th>公開状態</th>
+                {% if user.is_superuser %}
+                <th>編集</th>
+                <th>選択 全て選択:
+                    <input type="checkbox" id="select_all" class="form-check-input">
+                </th>
+                {% endif %}
+            </tr>
+        </thead>
+        <tbody>
+        {% for announcement in announcements %}
+            <tr>
+                <td>{{ announcement.id }}</td>
+                <td><a href="{% url 'announcement_detail' announcement.id %}">{{ announcement.title }}</a></td>
+                <td>{{ announcement.created_at }}</td>
+                <td>{{ announcement.is_public|yesno:"公開,非公開" }}</td>
+                <td>
+                    {% if user.is_superuser %}
+                        <a href="{% url 'announcement_edit' announcement.id %}" class="btn btn-primary">編集</a>
+                    {% endif %}
+                </td>
+                <td>
+                    {% if user.is_superuser %}
+                        <input class="form-check-input announcement_checkbox" type="checkbox" name="announcement" value="{{ announcement.id }}">
+                    {% endif %}
+                </td>
+            </tr>
+        {% endfor %}
+        </tbody>
+    </table>
+    <script>
+        // すべて選択のチェックボックスの動作
+        const announcement_checkbox = document.getElementsByClassName("announcement_checkbox");
+        const select_all = document.getElementById("select_all");
+        select_all.addEventListener("click", function() {
+            if (select_all.checked) {
+                for (let i = 0; i < announcement_checkbox.length; i++) {
+                    announcement_checkbox[i].checked = true;
+                }
+            } else {
+                for (let i = 0; i < announcement_checkbox.length; i++) {
+                    announcement_checkbox[i].checked = false;
+                }
+            }
+        });
+    </script>
+    <!-- 一括操作のアクション選択 -->
+    {% if user.is_superuser %}
+    <div class="row">
+        <form action="" method="POST" id="select_action">
+            {% csrf_token %}
+            <label class="col-md-2">選択したお知らせを</label>
+            <select name="action" id="action" class="form-control col-md-2">
+                <option value="delete">削除する</option>
+                <option value="unpublish">非公開にする</option>
+                <option value="publish">公開にする</option>
+            </select>
+            <button type="submit" class="btn btn-primary">実行</button>
+        </form>
+    </div>
+    {% endif %}
+    <script>
+        // このスクリプトはお知らせのチェックボックスの値を取得し、
+        // 選択されたアクションを実行するためのフォームを作成して送信する。
+        const select_action = document.getElementById("select_action");
+        select_action.addEventListener("submit", function(e) {
+            e.preventDefault();
+            const announcement_checkbox = document.getElementsByClassName("announcement_checkbox");
+            const action = document.getElementById("action").value;
+            const announcement_ids = [];
+            let checked_count = 0;
+            for (let i = 0; i < announcement_checkbox.length; i++) {
+                if (announcement_checkbox[i].checked) {
+                    announcement_ids.push(announcement_checkbox[i].value);
+                    checked_count++;
+                }
+            }
+            if (checked_count > 0) {
+                const form = document.createElement("form");
+                const csrf = document.createElement("input");
+                const action_input = document.createElement("input");
+                const announcement_ids_input = document.createElement("input");
+                csrf.setAttribute("type", "hidden");
+                csrf.setAttribute("name", "csrfmiddlewaretoken");
+                csrf.setAttribute("value", "{{ csrf_token }}");
+                action_input.setAttribute("type", "hidden");
+                action_input.setAttribute("name", "action");
+                action_input.setAttribute("value", action);
+                announcement_ids_input.setAttribute("type", "hidden");
+                announcement_ids_input.setAttribute("name", "announcement_ids");
+                announcement_ids_input.setAttribute("value", announcement_ids.join(','));
+                form.appendChild(csrf);
+                form.appendChild(action_input);
+                form.appendChild(announcement_ids_input);
+                form.setAttribute("action", "");
+                form.setAttribute("method", "POST");
+                document.body.appendChild(form);
+                if (confirm("選択されたお知らせに対してアクションを実行します。よろしいですか？")) {
+                    form.submit();
+                }
+            } else {
+                alert("お知らせが選択されていません。");
+            }
+        });
+    </script>
+{% else %}
+    <p>検索結果がありません。</p>
+{% endif %}
+{% endblock %}
